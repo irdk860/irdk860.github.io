@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Idris Akinsanya: sixth-form student in London aiming for a degree apprenticeship in IT, technology and cyber security.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Idris Akinsanya Portfolio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Cormorant+SC:wght@600&display=swap">
+<style>
+/* Layout: a quiet royal ledger. Dark ground, one parchment sheet for the opening, teal ribbon headings, plain gold-ruled sections. */
+:root{
+  --night:#111416;      /* dark ground */
+  --night-2:#181d20;    /* raised surface */
+  --parch:#ece0c4;      /* parchment */
+  --ink:#1d1a16;        /* text on parchment */
+  --ink-soft:#5c503f;
+  --teal:#1c5552;       /* ribbon teal */
+  --gold:#c9a24f;       /* gold rule */
+  --mist:#c8c1b1;       /* text on dark */
+  --dim:#8e887b;
+  --line:rgba(201,162,79,.28);
+  --f-display:"Cinzel Decorative","Cinzel",Georgia,serif;
+  --f-head:"Cinzel",Georgia,serif;
+  --f-sc:"Cormorant SC","Cormorant Garamond",Georgia,serif;
+  --f-body:"Cormorant Garamond",Garamond,Georgia,serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--night);color:var(--mist);font:500 20px/1.6 var(--f-body);overflow-x:hidden}
+::selection{background:var(--gold);color:var(--ink)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.notice{background:var(--gold);color:var(--ink);font:600 16px/1.3 var(--f-sc);letter-spacing:.06em}
+.notice .wrap{display:flex;gap:12px;align-items:center;justify-content:space-between;padding-block:8px}
+.notice button{background:var(--ink);color:var(--parch);border:0;font:inherit;padding:3px 12px;cursor:pointer}
+
+/* ribbon heading */
+.ribbon{position:relative;display:inline-block;margin:0;padding:8px 40px 7px 18px;color:var(--parch);font:700 clamp(22px,2.8vw,30px)/1.1 var(--f-head);letter-spacing:.06em;isolation:isolate}
+.ribbon::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--teal);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%)}
+
+/* hero */
+.hero{padding-block:clamp(48px,7vw,88px) 0}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:clamp(32px,5vw,64px);align-items:center}
+@media (max-width:860px){.hero-grid{grid-template-columns:1fr}}
+.sheet{background:var(--parch);color:var(--ink);padding:clamp(28px,4.5vw,52px);box-shadow:0 14px 34px rgba(0,0,0,.45);outline:1px solid var(--gold);outline-offset:-10px}
+.eyebrow{font:600 15px/1 var(--f-sc);letter-spacing:.28em;color:var(--teal)}
+.name{margin:14px 0 0;font:700 clamp(42px,6.6vw,84px)/1 var(--f-display);color:var(--ink);text-wrap:balance}
+.rule{display:block;width:120px;height:2px;background:var(--gold);margin:20px 0}
+.epithet{margin:0;font:italic 500 clamp(21px,2.2vw,25px)/1.4 var(--f-body);max-width:36ch}
+.lede{margin:12px 0 0;color:var(--ink-soft);max-width:50ch}
+
+.cmd-title{font:600 15px/1 var(--f-sc);letter-spacing:.28em;color:var(--gold);margin:0 0 14px}
+.menu{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.menu a{position:relative;display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 40px 9px 16px;text-decoration:none;color:var(--parch);isolation:isolate;transition:color .2s,transform .2s}
+.menu a::before{content:"";position:absolute;inset:0;z-index:-1;background:transparent;border-left:2px solid var(--line);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%);transition:background .2s}
+.menu .lbl{font:700 clamp(19px,2vw,23px)/1.1 var(--f-head);letter-spacing:.06em}
+.menu small{font:600 14px/1 var(--f-sc);letter-spacing:.16em;color:var(--dim)}
+.menu a.on{transform:translateX(8px)}
+.menu a.on::before{background:var(--teal);border-left-color:var(--gold)}
+.menu a.on small{color:var(--gold)}
+.keys{margin:14px 0 0;font:600 14px/1 var(--f-sc);letter-spacing:.14em;color:var(--dim)}
+.keys kbd{font:inherit;border:1px solid var(--line);padding:1px 6px;margin-right:3px;color:var(--mist)}
+@media (hover:none){.keys{display:none}}
+
+/* chapters */
+section.chapter{padding-block:clamp(64px,8vw,100px) 0}
+.chead{display:grid;gap:12px;margin-bottom:32px;justify-items:start}
+.chead p{margin:0;font-style:italic;color:var(--dim);max-width:60ch}
+
+/* about */
+.about{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:48px}
+@media (max-width:780px){.about{grid-template-columns:1fr;gap:28px}}
+.about p{margin:0 0 1em;max-width:62ch}
+dl.ledger{margin:0;display:grid;gap:14px;align-content:start}
+dl.ledger div{padding-bottom:12px;border-bottom:1px solid var(--line)}
+dl.ledger dt{font:600 14px/1 var(--f-sc);letter-spacing:.2em;color:var(--gold)}
+dl.ledger dd{margin:4px 0 0;color:var(--parch)}
+
+/* projects */
+.quests{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:20px}
+.quest{display:grid;gap:10px;align-content:start;background:var(--night-2);border-top:2px solid var(--gold);padding:22px 22px 24px;transition:transform .2s,background .2s}
+.quest:hover{transform:translateY(-3px);background:#1d2327}
+.state{font:600 14px/1 var(--f-sc);letter-spacing:.18em;color:var(--gold)}
+.state.wip{color:#d9876f}
+.quest h3{margin:0;font:700 21px/1.25 var(--f-head);color:var(--parch);letter-spacing:.03em}
+.quest p{margin:0;font-size:18px;color:var(--mist)}
+.quest .reward{font-style:italic;color:var(--dim)}
+.tags{font:600 14px/1.4 var(--f-sc);letter-spacing:.1em;color:var(--dim)}
+.qlinks{display:flex;gap:18px;flex-wrap:wrap}
+.qlinks a{font:600 16px/1 var(--f-sc);letter-spacing:.14em;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px}
+.qlinks a:hover{border-color:var(--gold)}
+
+/* skills */
+.relics{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:0 40px}
+.relic{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rank{grid-row:1/4;font:700 18px/1.3 var(--f-head);color:var(--gold)}
+.relic h3{margin:0;font:600 21px/1.25 var(--f-body);color:var(--parch)}
+.relic .kind{font:600 13px/1.3 var(--f-sc);letter-spacing:.2em;color:var(--dim)}
+.relic p{margin:2px 0 0;font-size:17px;line-height:1.45;color:var(--mist)}
+
+/* achievements */
+.trials{list-style:none;margin:0;padding:0;display:grid}
+.trial{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 24px;padding:16px 0;border-bottom:1px solid var(--line)}
+.trial time{font:600 16px/1.6 var(--f-sc);letter-spacing:.14em;color:var(--gold)}
+.trial h3{margin:0;font:600 21px/1.3 var(--f-body);color:var(--parch)}
+.trial.key h3::after{content:" ✦";color:var(--gold);font-size:.8em}
+.trial p{margin:2px 0 0;color:var(--mist);font-size:18px}
+@media (max-width:560px){.trial{grid-template-columns:1fr}}
+
+/* contact */
+.letter{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:32px;align-items:center;padding:clamp(24px,4vw,44px);background:var(--night-2);border-top:2px solid var(--gold)}
+@media (max-width:760px){.letter{grid-template-columns:1fr}}
+.letter h3{margin:0 0 8px;font:700 clamp(26px,3.4vw,38px)/1.15 var(--f-head);color:var(--parch);text-wrap:balance}
+.letter p{margin:0;max-width:48ch}
+.post{display:grid;gap:14px;min-width:0}
+.email-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.email{font:600 21px/1.2 var(--f-body);color:var(--ink);background:var(--parch);padding:10px 16px;user-select:all;overflow-wrap:anywhere;max-width:100%}
+.btn{border:1px solid var(--gold);background:transparent;color:var(--gold);font:600 16px/1 var(--f-sc);letter-spacing:.14em;padding:12px 16px;cursor:pointer;transition:background .2s,color .2s}
+.btn:hover{background:var(--gold);color:var(--ink)}
+.socials{display:flex;gap:20px;flex-wrap:wrap}
+.socials a{font:600 16px/1 var(--f-sc);letter-spacing:.16em;color:var(--mist);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:3px}
+.socials a:hover{color:var(--gold);border-color:var(--gold)}
+
+footer{padding-block:70px calc(36px + env(safe-area-inset-bottom,0px));color:var(--dim);font:600 14px/1.4 var(--f-sc);letter-spacing:.18em;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--parch);color:var(--ink);font:600 16px/1 var(--f-sc);letter-spacing:.12em;padding:12px 22px;z-index:20;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+
+@media (prefers-reduced-motion:no-preference){
+  .sheet{animation:fade .6s ease-out both}
+  @keyframes fade{from{transform:translateY(10px);opacity:.4}}
+}
+</style>
+</head>
+<body>
+
+
+<div class="notice" id="notice" hidden><div class="wrap"><span>Sample content. Replace the CONTENT block in the page source with your own details.</span><button id="hideNotice">Hide</button></div></div>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="sheet">
+      <div class="eyebrow" id="h-eyebrow"></div>
+      <h1 class="name" id="h-name"></h1>
+      <span class="rule" aria-hidden="true"></span>
+      <p class="epithet" id="h-epithet"></p>
+      <p class="lede" id="h-lede"></p>
+    </div>
+    <nav aria-label="Sections">
+      <p class="cmd-title">Choose a path</p>
+      <ul class="menu" id="menu"></ul>
+      <p class="keys"><kbd>↑</kbd><kbd>↓</kbd> choose · <kbd>Enter</kbd> go</p>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="chapter wrap" id="chronicle">
+    <div class="chead"><h2 class="ribbon">About me</h2></div>
+    <div class="about">
+      <div id="about-text"></div>
+      <dl class="ledger" id="about-stats"></dl>
+    </div>
+  </section>
+
+  <section class="chapter wrap" id="quests">
+    <div class="chead"><h2 class="ribbon">Projects &amp; experience</h2><p>Work experience and team projects, and what I took from each.</p></div>
+    <div class="quests" id="quest-list"></div>
+  </section>
+
+  <section class="chapter wrap" id="relics">
+    <div class="chead"><h2 class="ribbon">Skills</h2><p>What I bring, and where I've shown it.</p></div>
+    <div class="relics" id="relic-list"></div>
+  </section>
+
+  <section class="chapter wrap" id="trials">
+    <div class="chead"><h2 class="ribbon">Achievements</h2><p>Certificates, results and events, newest first.</p></div>
+    <ol class="trials" id="trial-list"></ol>
+  </section>
+
+  <section class="chapter wrap" id="correspondence">
+    <div class="chead"><h2 class="ribbon">Contact</h2></div>
+    <div class="letter">
+      <div><h3 id="c-head"></h3><p id="c-text"></p></div>
+      <div class="post">
+        <div class="email-row"><span class="email" id="c-email"></span><button class="btn" id="copyEmail">Copy email</button></div>
+        <div class="socials" id="c-socials"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div id="f-text"></div></footer>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* =====================================================================
+   CONTENT: edit everything below to make the site yours.
+   Set sample:false once the details are real, to hide the notice bar.
+   ===================================================================== */
+var CONTENT = {
+  sample: false,
+  name: "Idris Akinsanya",
+  eyebrow: "IT & Cyber Security · Portfolio",
+  epithet: "Sixth-form student at Ark Walworth Academy, aiming for a degree apprenticeship in IT and technology.",
+  lede: "I'm curious about how things work, and I like adding to my skills wherever I can: in lessons, in work experience and in my own time. This site collects what I've done so far and where I want to go next.",
+  about: [
+    "I'm a sixth-form student at Ark Walworth Academy in London. I hold myself to high standards, and I'm always looking for new opportunities to learn, whether that's through coursework, extracurricular activities or independent projects.",
+    "Work experience with Transport for London and the Construction Youth Trust showed me how much technology sits behind the places we live and travel through, from control rooms tracking the city's bikes to planning how a building can be reused. I'm now working towards the IBM and ISC2 Cybersecurity Specialist certificate.",
+    "I'm looking for a degree apprenticeship in IT and technology, ideally one that links with construction and the built environment."
+  ],
+  stats: [
+    ["Studying", "Sixth Form, Ark Walworth Academy"],
+    ["Predicted grades", "D*DD"],
+    ["GCSEs (2025)", "Seven grade 6s, including Maths and English"],
+    ["Based in", "London"],
+    ["Seeking", "IT / technology degree apprenticeship, 2027"]
+  ],
+  projects: [
+    { title: "UP3 Consulting Project", state: "Completed", text: "Took a consulting project from the brief to a final presentation to stakeholders. I researched the problem and gave the client clear recommendations they could act on.", reward: "Earned a ServiceNow Micro-Certification, and gained insight into B2B marketing, inside sales and presenting.", tags: ["Consulting","Research","Project management","ServiceNow"], links: [] },
+    { title: "Repurposing 65 Fleet Street", state: "Completed", text: "With the Construction Youth Trust's Building Future Skills programme, my group visited a live construction site at 65 Fleet Street, planned how the building could be repurposed, and improved the idea with advice from industry professionals.", reward: "Pitched our final project to a panel of industry professionals and explained why it should be chosen.", tags: ["Built environment","Teamwork","Pitching"], links: [] },
+    { title: "Transport for London Work Experience", state: "Completed", text: "Three days inside TfL: the control rooms for surface transport, the Underground and tunnels, the IT department, and the Penton Street site where Santander bikes and e-bikes are repaired, recycled and moved to empty docking stations.", reward: "Took part in a lessons-learned workshop on installing new LED lighting, and learned what mechanical, hydraulic and consulting engineers do.", tags: ["Infrastructure","Operations","Engineering"], links: [] },
+    { title: "J.P. Morgan School Challenge 2022", state: "Completed", text: "I was selected to be my team's product design manager. I had to work closely with people I'd never properly spoken to before, and keep us moving even when we didn't agree on every part of the plan.", reward: "Learned to stay positive and find common ground under pressure.", tags: ["Product design","Teamwork","Resilience"], links: [] }
+  ],
+  skills: [
+    { name: "Planning", kind: "Aiming high", note: "Planned how my group's class presentation would be structured and laid out, so we could deliver it smoothly." },
+    { name: "Leadership", kind: "People", note: "Structured my group's PowerPoint on digital devices in IT so it looked neat and we could present with ease." },
+    { name: "Teamwork", kind: "People", note: "Split the slides across the team and took ownership of the layout." },
+    { name: "Resilience", kind: "Staying positive", note: "Kept my J.P. Morgan challenge team moving through disagreements with people I'd just met." },
+    { name: "Presenting and pitching", kind: "Communication", note: "Pitched to a panel of industry professionals and presented recommendations to client stakeholders." },
+    { name: "Research and recommendations", kind: "Consulting", note: "Turned research into clear, actionable recommendations for a client on the UP3 programme." },
+    { name: "ServiceNow", kind: "Platform", note: "Hands-on platform experience and a ServiceNow Micro-Certification." },
+    { name: "Microsoft PowerPoint", kind: "Tools", note: "Designed slide layouts for group presentations." }
+  ],
+  achievements: [
+    { date: "In progress", title: "IBM & ISC2 Cybersecurity Specialist Professional Certificate", text: "Working towards it now." },
+    { date: "UP3", title: "ServiceNow Micro-Certification", text: "Earned with hands-on platform experience during the UP3 consulting programme.", key: true },
+    { date: "Feb 2026", title: "University of Manchester, Department of Computer Science", text: "Guided tour of the Alan Turing and Kilburn buildings." },
+    { date: "Jan 2026", title: "Lloyds Banking Group and KPMG careers events", text: "Online careers events, including Lloyds' session on apprenticeship paths." },
+    { date: "Summer 2025", title: "GCSE results", text: "Grade 6 in English Language (with Merit), English Literature, Maths, Biology, Physics, Chemistry and History. Merit in BTEC Level 3 Music, and 5 in Photography.", key: true }
+  ],
+  contact: {
+    heading: "Get in touch",
+    text: "I'm open to degree apprenticeships, work experience and insight days in IT, technology and cyber security.",
+    email: "sbj01215@gmail.com",
+    socials: [["GitHub","https://github.com/irdk860"],["LinkedIn","https://www.linkedin.com/in/idris-akinsanya-88516b385"]]
+  },
+  footer: "Hand-built with HTML, CSS and a little JavaScript."
+};
+/* ===================================================================== */
+
+(function(){
+"use strict";
+var C=CONTENT, ROMAN=["","I","II","III","IV","V"];
+function $(id){return document.getElementById(id);}
+function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function link(label,href){var a=el("a",null,label);if(/^https:\/\//.test(href)){a.href=href;a.target="_blank";a.rel="noopener";}return a;}
+
+$("notice").hidden=!C.sample;
+$("hideNotice").onclick=function(){$("notice").hidden=true;};
+$("h-eyebrow").textContent=C.eyebrow;$("h-name").textContent=C.name;$("h-epithet").textContent=C.epithet;$("h-lede").textContent=C.lede;
+
+/* menu */
+var PATHS=[["chronicle","About me","I"],["quests","Projects","II"],["relics","Skills","III"],["trials","Achievements","IV"],["correspondence","Contact","V"]];
+var menu=$("menu"),items=[],sel=0;
+PATHS.forEach(function(p,i){
+  var li=el("li"),a=el("a");a.href="#"+p[0];
+  a.appendChild(el("span","lbl",p[1]));a.appendChild(el("small",null,p[2]));
+  a.addEventListener("mouseenter",function(){pick(i);});a.addEventListener("focus",function(){pick(i);});
+  li.appendChild(a);menu.appendChild(li);items.push(a);
+});
+function pick(i){sel=(i+items.length)%items.length;items.forEach(function(a,j){a.classList.toggle("on",j===sel);});}
+pick(0);
+document.addEventListener("keydown",function(e){
+  if(e.target.closest&&e.target.closest("input,textarea,select"))return;
+  if(document.querySelector(".hero").getBoundingClientRect().bottom<=120)return;
+  if(e.key==="ArrowDown"){e.preventDefault();pick(sel+1);items[sel].focus({preventScroll:true});}
+  else if(e.key==="ArrowUp"){e.preventDefault();pick(sel-1);items[sel].focus({preventScroll:true});}
+});
+
+/* about */
+C.about.forEach(function(t){$("about-text").appendChild(el("p",null,t));});
+C.stats.forEach(function(s){var d=el("div");d.appendChild(el("dt",null,s[0]));d.appendChild(el("dd",null,s[1]));$("about-stats").appendChild(d);});
+
+/* projects */
+C.projects.forEach(function(p){
+  var q=el("article","quest");
+  q.appendChild(el("span","state"+(/complete/i.test(p.state)?"":" wip"),p.state));
+  q.appendChild(el("h3",null,p.title));q.appendChild(el("p",null,p.text));
+  if(p.reward)q.appendChild(el("p","reward",p.reward));
+  q.appendChild(el("div","tags",p.tags.join(" · ")));
+  if(p.links&&p.links.length){var l=el("div","qlinks");/* links optional */p.links.forEach(function(k){l.appendChild(link(k[0],k[1]));});q.appendChild(l);}
+  $("quest-list").appendChild(q);
+});
+
+/* skills */
+C.skills.forEach(function(s){
+  var r=el("div","relic"),rk;
+  if(s.level){var lv=Math.max(1,Math.min(5,s.level|0));rk=el("span","rank",ROMAN[lv]);rk.setAttribute("aria-label","Rank "+lv+" of 5");}
+  else{rk=el("span","rank","✦");rk.setAttribute("aria-hidden","true");}
+  r.appendChild(rk);r.appendChild(el("span","kind",s.kind));r.appendChild(el("h3",null,s.name));r.appendChild(el("p",null,s.note));
+  $("relic-list").appendChild(r);
+});
+
+/* achievements */
+C.achievements.forEach(function(a){
+  var li=el("li","trial"+(a.key?" key":""));li.appendChild(el("time",null,a.date));
+  var b=el("div");b.appendChild(el("h3",null,a.title));if(a.text)b.appendChild(el("p",null,a.text));
+  li.appendChild(b);$("trial-list").appendChild(li);
+});
+
+/* contact */
+$("c-head").textContent=C.contact.heading;$("c-text").textContent=C.contact.text;$("c-email").textContent=C.contact.email;
+C.contact.socials.forEach(function(s){$("c-socials").appendChild(link(s[0],s[1]));});
+$("c-socials").hidden=!C.contact.socials.length;
+$("f-text").textContent=C.footer;
+function toast(m){var t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true;},2200);}
+$("copyEmail").onclick=function(){
+  var v=C.contact.email;
+  function sel(){var r=document.createRange();r.selectNodeContents($("c-email"));var s=getSelection();s.removeAllRanges();s.addRange(r);toast("Press Ctrl+C to copy");}
+  try{navigator.clipboard.writeText(v).then(function(){toast("Email copied");},sel);}catch(e){sel();}
+};
+})();
+</script>
+
+</body>
+</html>
