@@ -48,9 +48,17 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 .shelfwrap{width:min(860px,100%)}
 .shelfwrap h2{font:600 22px/1.2 Fraunces,serif;margin:0 0 12px}
 .shelf{display:flex;flex-wrap:wrap;gap:12px}
-.spine{flex:1 1 240px;text-align:left;background:var(--paper);border:1px solid var(--line);border-left:10px solid var(--cloth);border-radius:4px;padding:12px 16px;min-height:60px;display:grid;gap:2px}
+.spine{flex:1 1 260px;display:flex;align-items:stretch;background:var(--paper);border:1px solid var(--line);border-left:10px solid var(--cloth);border-radius:4px}
+.spine .open{flex:1;text-align:left;border:0;background:none;padding:12px 16px;min-height:60px;display:grid;gap:2px}
+.spine .open:hover{background:light-dark(rgba(59,33,64,.05),rgba(255,255,255,.04))}
 .spine b{font:600 17px/1.25 Fraunces,serif}
 .spine span{font-size:13px;color:var(--soft)}
+.spine em{font-style:normal;font-size:14px;font-weight:600;color:var(--cloth)}
+:root[data-theme=dark] .spine em{color:#c9a4cf}
+.spine .rm{border:0;background:none;min-width:44px;padding:0 10px;color:var(--soft);font-size:14px;border-radius:0 4px 4px 0}
+.spine .rm:hover,.spine .rm.sure{color:var(--ribbon)}
+.resume{display:inline-flex;align-items:center;gap:10px;margin:18px auto 0;min-height:48px;padding:0 22px;border:0;border-radius:999px;background:var(--ribbon);color:#fff;font-weight:600;font-size:16px;max-width:100%}
+.resume span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{color:var(--soft);margin:0;font-size:15px}
 .install{width:min(860px,100%);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:20px 22px}
 .install h2{font:600 22px/1.2 Fraunces,serif;margin:0 0 4px}
@@ -90,7 +98,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 .flow h2{font:400 1.55em/1.15 Fraunces,serif;text-align:center;margin:1.6em 0 1.3em;text-wrap:balance;break-after:avoid;text-indent:0}
 .flow h2::after{content:"";display:block;width:2.2em;height:1px;background:var(--soft);margin:.7em auto 0}
 .flow .brk{text-align:center;text-indent:0;margin:.7em 0;color:var(--soft);letter-spacing:.4em}
-.foot{display:flex;align-items:center;gap:14px;padding:6px max(3vw,14px) calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--soft)}
+.foot{display:flex;align-items:center;gap:14px;min-height:44px;padding:6px max(3vw,14px) calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--soft)}
 .prog{flex:1;height:4px;background:var(--line);border-radius:2px;position:relative;cursor:pointer}
 .prog i{position:absolute;inset:0 auto 0 0;background:var(--cloth);border-radius:2px}
 .foot span{white-space:nowrap}
@@ -123,6 +131,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
   <div>
     <h1>Read any PDF like a book</h1>
     <p class="lede">Drop in a PDF and it's reflowed into real pages: clean text, proper paragraphs, chapters you can jump between, and bookmarks that keep your place.</p>
+    <div style="text-align:center"><button class="resume" id="resume" hidden></button></div>
   </div>
   <div class="cover" id="cover" tabindex="0" role="button" aria-label="Choose a PDF to open">
     <b id="coverTitle">Open a book</b>
@@ -149,7 +158,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Your reading place and bookmarks are saved in this browser on this device. Works with text PDFs; scanned page images have no text to reflow.</p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow.</p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -187,6 +196,12 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const LS='bookreader:';
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+/* books are kept on this device so they reopen without choosing the PDF again */
+const idb=(()=>{let p=null;
+  const open=()=>p||(p=new Promise((res,rej)=>{try{const r=indexedDB.open('bookreader',1);r.onupgradeneeded=()=>r.result.createObjectStore('books',{keyPath:'key'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}));
+  const run=(mode,fn)=>open().then(d=>new Promise((res,rej)=>{const tx=d.transaction('books',mode);const r=fn(tx.objectStore('books'));tx.oncomplete=()=>res(r.result);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}));
+  return {put:b=>run('readwrite',s=>s.put(b)),get:k=>run('readonly',s=>s.get(k)),del:k=>run('readwrite',s=>s.delete(k)),keys:()=>run('readonly',s=>s.getAllKeys())};
+})();
 const timeout=(p,ms=9000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
 
 /* ---------- storage: per-person db, with this browser as a fallback ---------- */
@@ -315,6 +330,8 @@ async function openFile(file){
     if(b.blocks.filter(x=>x.t==='p').length<3){fail('This PDF has almost no text in it \u2014 it\u2019s probably scanned page images, which can\u2019t be reflowed into book pages.');return}
     const key='b'+fnv(file.name+'|'+file.size+'|'+pdf.numPages);
     book={...b,key,title};
+    idb.put({key,title,blocks:b.blocks,chapters:b.chapters,added:Date.now()}).catch(()=>toast('Couldn\u2019t keep a copy on this device, so you\u2019ll need to choose the PDF again next time'));
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
     rec=await loadRec(key)||{key,title,file:file.name,pos:0,pct:0,bookmarks:[]};
     rec.title=title;rec.opened=Date.now();rec.bookmarks=rec.bookmarks||[];
     if(rec.pos>=book.blocks.length)rec.pos=0;
@@ -347,12 +364,16 @@ function measure(){
   views=Math.max(1,Math.ceil(total/cols));
 }
 function visible(){
-  const vr=vp.getBoundingClientRect();let f=null,l=null;
+  /* returns [first block that starts on these pages, last block shown, first block touching these pages] */
+  const vr=vp.getBoundingClientRect();let s=null,l=null,t=null;
   for(const el of flow.children){
-    for(const r of el.getClientRects()){if(r.width&&r.right>vr.left+2&&r.left<vr.right-2){if(f===null)f=+el.dataset.i;l=+el.dataset.i;break}}
-    if(l!==null&&f!==null&&el.getClientRects().length&&el.getClientRects()[0].left>vr.right)break;
+    const rs=el.getClientRects();if(!rs.length)continue;
+    if(rs[0].left>=vr.right-2)break;
+    const i=+el.dataset.i;
+    if(rs[0].left>=vr.left-2&&s===null)s=i;
+    for(const r of rs){if(r.width&&r.right>vr.left+2&&r.left<vr.right-2){if(t===null)t=i;l=i;break}}
   }
-  const c=book.chapters[ch];return [f??c.start,l??c.start];
+  const c=book.chapters[ch];t=t??c.start;return [s??t,l??t,t];
 }
 function viewOf(i){
   const el=flow.querySelector(`[data-i="${i}"]`);if(!el)return 0;
@@ -360,38 +381,39 @@ function viewOf(i){
   const x=r.left-vp.getBoundingClientRect().left+vp.scrollLeft;
   return Math.min(views-1,Math.max(0,Math.floor((x+2)/step/cols)));
 }
-function go(v,anim=true){
+function go(v,anim=true,keep=false){
   view=Math.max(0,Math.min(views-1,v));vp.scrollLeft=Math.round(view*cols*step);
   if(anim){flow.classList.remove('fade');void flow.offsetWidth;flow.classList.add('fade')}
-  update();
+  update(keep);
 }
-function update(){
-  const [f,l]=visible();rec.pos=f;rec.pct=book.blocks.length>1?f/(book.blocks.length-1):0;
+/* keep=true: the layout changed (resize, fonts, text size), so hold the saved place instead of re-reading it */
+function update(keep){
+  const [f,l,t]=visible();if(!keep)rec.pos=f;rec.pct=book.blocks.length>1?f/(book.blocks.length-1):0;
   const c=book.chapters[ch];
   $('#rChap').textContent=c.title;
   const a=view*cols+1,b=Math.min(view*cols+cols,Math.max(1,Math.round((vp.scrollWidth+parseFloat(flow.style.columnGap))/step)));
   $('#pages').textContent=`Chapter ${ch+1} of ${book.chapters.length} · ${a===b||cols===1?'page '+a:'pages '+a+'–'+b} of ${Math.round((vp.scrollWidth+parseFloat(flow.style.columnGap))/step)}`;
   $('#pct').textContent=Math.round(rec.pct*100)+'%';$('#progFill').style.width=rec.pct*100+'%';
-  const on=rec.bookmarks.some(m=>m.i>=f&&m.i<=l);
+  const on=rec.bookmarks.some(m=>m.i>=t&&m.i<=l);
   $('#mark').classList.toggle('on',on);$('#ribbon').classList.toggle('on',on);
   $('#mark').setAttribute('aria-label',on?'Remove bookmark from this page':'Bookmark this page');
   saveSoon();
 }
-function goBlock(i){const k=chapterAt(i);if(k!==ch||!flow.firstChild)renderChapter(k);go(viewOf(i))}
+function goBlock(i,keep){const k=chapterAt(i);if(k!==ch||!flow.firstChild)renderChapter(k);if(keep)rec.pos=i;go(viewOf(i),true,keep)}
 function next(){if(view<views-1)go(view+1);else if(ch<book.chapters.length-1){renderChapter(ch+1);go(0)}else toast('You\u2019ve reached the end of the book')}
 function prev(){if(view>0)go(view-1);else if(ch>0){renderChapter(ch-1);go(views-1)}}
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2200)}
 function showReader(){
   $('#home').hidden=true;$('#reader').hidden=false;$('#rTitle').textContent=book.title;document.title=book.title;
-  requestAnimationFrame(()=>{goBlock(rec.pos||0);saveNow();if(rec.pos>0)toast('Picked up where you left off')});
+  requestAnimationFrame(()=>{goBlock(rec.pos||0,true);saveNow();if(rec.pos>0)toast('Picked up where you left off')});
 }
 function toggleMark(){
-  const [f,l]=visible();const here=rec.bookmarks.filter(m=>m.i>=f&&m.i<=l);
+  const [f,l,t]=visible();const here=rec.bookmarks.filter(m=>m.i>=t&&m.i<=l);
   if(here.length){rec.bookmarks=rec.bookmarks.filter(m=>!here.includes(m));toast('Bookmark removed')}
   else{const b=book.blocks[f];rec.bookmarks.push({i:f,ch:book.chapters[ch].title,s:(b.s||'Scene break').slice(0,110),at:Date.now()});rec.bookmarks.sort((a,b)=>a.i-b.i);toast('Page bookmarked')}
   update();saveNow();if(!$('#drawer').hidden)renderList();
 }
-function relayout(){if(!book||$('#reader').hidden)return;const [f]=visible();renderChapter(ch);go(viewOf(f),false)}
+function relayout(){if(!book||$('#reader').hidden)return;const i=rec.pos;if(chapterAt(i)!==ch){renderChapter(ch);go(view,false);return}renderChapter(ch);go(viewOf(i),false,true)}
 
 /* drawer */
 let tab='c';
@@ -433,6 +455,7 @@ vp.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches
 vp.addEventListener('scroll',()=>{const want=Math.round(view*cols*step);if(Math.abs(vp.scrollLeft-want)>2)vp.scrollLeft=want});
 let rt=0;const ro=new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(relayout,140)});ro.observe(vp);
 window.addEventListener('pagehide',saveNow);
+try{document.fonts&&document.fonts.ready.then(()=>relayout())}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveNow()});
 
 /* home */
@@ -447,10 +470,33 @@ document.addEventListener('dragover',e=>e.preventDefault());
 document.addEventListener('drop',e=>{e.preventDefault();if(!$('#home').hidden&&e.dataTransfer.files[0])openFile(e.dataTransfer.files[0])});
 async function renderShelf(){
   const recs=await listRecs();const el=$('#shelf');
+  let have=new Set();try{have=new Set(await idb.keys())}catch(e){}
+  const top=recs.find(r=>have.has(r.key)),rb=$('#resume');
+  if(top){rb.hidden=false;rb.dataset.key=top.key;rb.dataset.title=top.title;rb.innerHTML=`<span>Continue reading: ${esc(top.title)}</span><b>${Math.round((top.pct||0)*100)}%</b>`}else rb.hidden=true;
   if(!recs.length){el.innerHTML='<p class="empty">Books you open will sit here, with your place and bookmarks saved.</p>';return}
-  el.innerHTML=recs.map(r=>{const n=(r.bookmarks||[]).length;return `<button class="spine" data-key="${esc(r.key)}" data-title="${esc(r.title)}"><b>${esc(r.title)}</b><span>${Math.round((r.pct||0)*100)}% read · ${n} bookmark${n===1?'':'s'}</span></button>`}).join('');
+  el.innerHTML=recs.map(r=>{const n=(r.bookmarks||[]).length;return `<div class="spine"><button class="open" data-key="${esc(r.key)}" data-title="${esc(r.title)}"><b>${esc(r.title)}</b><span>${Math.round((r.pct||0)*100)}% read · ${n} bookmark${n===1?'':'s'}</span><em>${have.has(r.key)?'Continue reading →':'Choose the PDF again to continue'}</em></button><button class="rm" data-key="${esc(r.key)}" aria-label="Remove ${esc(r.title)} from shelf">Remove</button></div>`}).join('');
 }
-$('#shelf').addEventListener('click',e=>{const s=e.target.closest('.spine');if(!s)return;wantKey=s.dataset.key;$('#coverTitle').textContent=s.dataset.title;status('Choose this book\u2019s PDF again to pick up where you left off');input.click()});
+async function resume(key,title){
+  let b=null;try{b=await idb.get(key)}catch(e){}
+  if(b&&b.blocks&&b.blocks.length){
+    book=b;rec=await loadRec(key)||{key,title:b.title,pos:0,pct:0,bookmarks:[]};
+    rec.bookmarks=rec.bookmarks||[];rec.title=b.title;rec.opened=Date.now();if(!(rec.pos<book.blocks.length))rec.pos=0;
+    showReader();return;
+  }
+  wantKey=key;$('#coverTitle').textContent=title;status('Choose this book’s PDF again to pick up where you left off');input.click();
+}
+async function removeBook(key){
+  try{await idb.del(key)}catch(e){}
+  try{localStorage.removeItem(LS+key)}catch(e){}
+  if(db){try{await timeout(db.collection('data/users/'+uid).doc(key).delete())}catch(e){}}
+  renderShelf();
+}
+$('#shelf').addEventListener('click',e=>{
+  const rm=e.target.closest('.rm');
+  if(rm){if(rm.classList.contains('sure'))removeBook(rm.dataset.key);else{rm.classList.add('sure');rm.textContent='Remove?';setTimeout(()=>{rm.classList.remove('sure');rm.textContent='Remove'},3000)}return}
+  const s=e.target.closest('.open');if(s)resume(s.dataset.key,s.dataset.title);
+});
+$('#resume').onclick=e=>resume(e.currentTarget.dataset.key,e.currentTarget.dataset.title);
 renderShelf();
 {
   const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);

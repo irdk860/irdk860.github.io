@@ -1,5 +1,5 @@
 // Keeps Book Reader working offline: the page, its icons, the PDF library and fonts are cached.
-const CACHE = 'book-reader-v1';
+const CACHE = 'book-reader-v2';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',

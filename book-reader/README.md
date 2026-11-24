@@ -10,10 +10,11 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - rebuilds paragraphs and joins words split by hyphens at line ends
 - finds chapter headings and builds a contents list
 - lets you bookmark pages with a ribbon and jump back to them
-- remembers where you stopped and shows your books on a shelf
+- keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
+- remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
-Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. Bookmarks and reading positions are saved in your browser's local storage on that device.
+Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
 
 ## Install it
 
@@ -36,6 +37,8 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - download [`book-reader.html`](book-reader.html) and open it in any browser (it needs an internet connection the first time to load PDF.js and the fonts).
 
 ## Limits
+
+- Books, places and bookmarks are kept per device and per browser. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 
 - Works with PDFs that contain real text. Scanned books (photos of pages) have no text to reflow.
 - Images in the PDF aren't shown.
