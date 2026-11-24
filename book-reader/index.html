@@ -97,6 +97,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 :root[data-theme=dark] .flow p.cap::first-letter{color:#c9a4cf}
 .flow h2{font:400 1.55em/1.15 Fraunces,serif;text-align:center;margin:1.6em 0 1.3em;text-wrap:balance;break-after:avoid;text-indent:0}
 .flow h2::after{content:"";display:block;width:2.2em;height:1px;background:var(--soft);margin:.7em auto 0}
+.flow .toc{text-align:left;margin:.2em 0}
 .flow .brk{text-align:center;text-indent:0;margin:.7em 0;color:var(--soft);letter-spacing:.4em}
 .foot{display:flex;align-items:center;gap:14px;min-height:44px;padding:6px max(3vw,14px) calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:var(--soft)}
 .prog{flex:1;height:4px;background:var(--line);border-radius:2px;position:relative;cursor:pointer}
@@ -160,7 +161,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 4 · 24 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 5 · 24 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -271,8 +272,11 @@ function buildBook(pages){
   pages.forEach(ls=>{const seen=new Set();[...ls.slice(0,2),...ls.slice(-2)].forEach(l=>{const n=norm(l.text);if(n&&!seen.has(n)){seen.add(n);count[n]=(count[n]||0)+1}})});
   const thresh=Math.max(3,pages.length*0.2);
   const isNum=t=>/^[\d\s\-–—.]+$/.test(t)||/^[ivxlc]+$/.test(t);
+  const sz=[];pages.forEach(ls=>ls.forEach(l=>{if(l.text.length>30)sz.push(l.size)}));sz.sort((a,b)=>a-b);
+  const body0=sz.length?sz[sz.length>>1]:10;
   const clean=pages.map(ls=>ls.filter((l,k)=>{
     if(k>=2&&k<ls.length-2)return true;
+    if(l.size>=body0*1.15)return true; /* big text at the top is a chapter heading, not a running header */
     if(isNum(l.text))return false;
     const n=norm(l.text);return !(n.length>2&&count[n]>=thresh&&!headRe.test(l.text));
   }));
@@ -284,6 +288,8 @@ function buildBook(pages){
   const blocks=[];let para=null,prev=null,prevPage=-1,prevR=0,cap='',lastHeadPage=-9;
   const flush=()=>{if(para){blocks.push({t:'p',s:para});para=null}};
   const join=(a,b)=>/[a-z]-$/i.test(a)&&/^[a-z]/.test(b)?a.slice(0,-1)+b:/[—–]$/.test(a)?a+b:a+' '+b;
+  /* a contents page lists many chapters: keep it as a plain list, not as real chapter starts */
+  const tocPage=clean.map(ls=>ls.filter(l=>headRe.test(l.text)&&l.text.length<70).length>=4);
   clean.forEach((ls,pi)=>{
     const bl=ls.filter(l=>Math.abs(l.size-body)<1);
     const L=bl.length?mode(bl.map(l=>Math.round(l.x))):0;
@@ -291,6 +297,7 @@ function buildBook(pages){
     ls.forEach(l=>{
       const t=l.text;
       if(/^([*•·~#◆❖⁂§]\s*){1,5}$/.test(t)){flush();blocks.push({t:'b'});prev=null;return}
+      if(tocPage[pi]){flush();blocks.push({t:'l',s:t});prev=null;return}
       const big=l.size>=body*1.22;
       if(big&&t.length<=2&&/^[A-Z“"‘']+$/.test(t)){flush();cap=t;prev=l;prevPage=pi;return}
       if((big&&t.length<90&&/[a-z0-9]/i.test(t))||(headRe.test(t)&&t.length<60&&!/[.,;]$/.test(t)&&(big||t===t.toUpperCase()||l.x>L+body*2))){
@@ -315,11 +322,27 @@ function buildBook(pages){
   blocks.forEach((b,i)=>{if(b.t==='h')chapters.push({title:b.s,start:i});else if(!chapters.length)chapters.push({title:'Opening pages',start:0})});
   if(chapters.length<3&&blocks.length>160){chapters=[];for(let i=0,n=1;i<blocks.length;i+=90,n++)chapters.push({title:'Section '+n,start:i})}
   chapters.forEach((c,k)=>c.end=k+1<chapters.length?chapters[k+1].start:blocks.length);
-  return {blocks,chapters:chapters.filter(c=>c.end>c.start)};
+  /* fold "chapters" with almost no story text (dedications, maps, stray headings) into a neighbour */
+  const words=c=>{let n=0;for(let i=c.start;i<c.end;i++)if(blocks[i].t==='p')n+=blocks[i].s.length;return n};
+  const out=[];
+  for(const c of chapters.filter(c=>c.end>c.start)){
+    if(out.length&&words(c)<800)out[out.length-1].end=c.end;
+    else out.push({...c});
+  }
+  if(out.length>1&&words(out[0])<800){out[1].start=out[0].start;out.shift()}
+  return {blocks,chapters:out};
 }
 
 /* ---------- opening a file ---------- */
 const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)};
+const PARSE_V=2; /* bump when the way pages are built changes, so saved books get rebuilt */
+/* move the saved place and bookmarks onto a rebuilt book of n blocks, by how far through they were */
+function remap(r,n){
+  if(r.pv===PARSE_V)return;
+  const old=r.n||(r.pct>0&&r.pos>0?r.pos/r.pct+1:0);
+  if(old>1&&old!==n){const k=(n-1)/(old-1);r.pos=Math.round(r.pos*k);r.bookmarks=r.bookmarks.map(m=>({...m,i:Math.min(n-1,Math.round(m.i*k))}))}
+  r.pv=PARSE_V;r.n=n;
+}
 let book=null,rec=null,ch=0,view=0,views=1,cols=1,step=1,off=0,totalCols=1,wantKey=null;
 function status(msg,frac){$('#coverSub').textContent=msg;const b=$('#bar');b.hidden=frac==null;if(frac!=null)b.firstElementChild.style.width=Math.round(frac*100)+'%'}
 function fail(msg){$('#err').textContent=msg;$('#err').hidden=false;$('#coverTitle').textContent='Open a book';status('Drop a PDF on this cover');$('#coverBtn').hidden=false}
@@ -342,10 +365,10 @@ async function openFile(file){
     if(b.blocks.filter(x=>x.t==='p').length<3){fail('This PDF has almost no text in it \u2014 it\u2019s probably scanned page images, which can\u2019t be reflowed into book pages.');return}
     const key='b'+fnv(file.name+'|'+file.size+'|'+pdf.numPages);
     book={...b,key,title};
-    idb.put({key,title,blocks:b.blocks,chapters:b.chapters,added:Date.now()}).catch(()=>toast('Couldn\u2019t keep a copy on this device, so you\u2019ll need to choose the PDF again next time'));
+    idb.put({key,title,v:PARSE_V,blocks:b.blocks,chapters:b.chapters,added:Date.now()}).catch(()=>toast('Couldn\u2019t keep a copy on this device, so you\u2019ll need to choose the PDF again next time'));
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
     rec=await loadRec(key)||{key,title,file:file.name,pos:0,pct:0,bookmarks:[]};
-    rec.title=title;rec.opened=Date.now();rec.bookmarks=rec.bookmarks||[];
+    rec.title=title;rec.opened=Date.now();rec.bookmarks=rec.bookmarks||[];remap(rec,book.blocks.length);
     if(rec.pos>=book.blocks.length)rec.pos=0;
     pdf.destroy();
     showReader();
@@ -360,6 +383,7 @@ function renderChapter(k){
   for(let i=c.start;i<c.end;i++){const b=book.blocks[i];
     if(b.t==='h'){h+=`<h2 data-i="${i}">${esc(b.s)}</h2>`;first=true;afterHead=true}
     else if(b.t==='b'){h+=`<p class="brk" data-i="${i}">* * *</p>`;first=true}
+    else if(b.t==='l'){h+=`<p class="first toc" data-i="${i}">${esc(b.s)}</p>`;first=true}
     else{h+=`<p data-i="${i}" class="${first?'first':''}${afterHead&&/^[A-Za-z]/.test(b.s)?' cap':''}">${esc(b.s)}</p>`;first=false;afterHead=false}
   }
   flow.innerHTML=h;measure();
@@ -494,6 +518,7 @@ async function renderShelf(){
 }
 async function resume(key,title){
   let b=null;try{b=await idb.get(key)}catch(e){}
+  if(b&&b.blocks&&b.blocks.length&&b.v!==PARSE_V){wantKey=key;$('#coverTitle').textContent=title;status('The reader has been improved \u2014 choose this PDF once more to rebuild its pages');input.click();return}
   if(b&&b.blocks&&b.blocks.length){
     book=b;rec=await loadRec(key)||{key,title:b.title,pos:0,pct:0,bookmarks:[]};
     rec.bookmarks=rec.bookmarks||[];rec.title=b.title;rec.opened=Date.now();if(!(rec.pos<book.blocks.length))rec.pos=0;
