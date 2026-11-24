@@ -139,6 +139,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
     <div class="bar" id="bar" hidden><i></i></div>
   </div>
   <p class="err" id="err" hidden></p>
+  <p class="err" id="nostore" hidden>This browser is blocking storage for this page (private browsing, or a downloaded file opened in Safari or Firefox), so books can’t be kept and you’ll be asked for the PDF each time. Open the online version instead: irdk860.github.io/book-reader</p>
   <ul class="feats">
     <li>Two-page spreads, one page on phones</li>
     <li>Contents built from chapter headings</li>
@@ -157,7 +158,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow.</p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 3 · 24 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -199,7 +200,17 @@ const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const idb=(()=>{let p=null;
   const open=()=>p||(p=new Promise((res,rej)=>{try{const r=indexedDB.open('bookreader',1);r.onupgradeneeded=()=>r.result.createObjectStore('books',{keyPath:'key'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}));
   const run=(mode,fn)=>open().then(d=>new Promise((res,rej)=>{const tx=d.transaction('books',mode);const r=fn(tx.objectStore('books'));tx.oncomplete=()=>res(r.result);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}));
-  return {put:b=>run('readwrite',s=>s.put(b)),get:k=>run('readonly',s=>s.get(k)),del:k=>run('readwrite',s=>s.delete(k)),keys:()=>run('readonly',s=>s.getAllKeys())};
+  const raw={put:b=>run('readwrite',s=>s.put(b)),get:k=>run('readonly',s=>s.get(k)),del:k=>run('readwrite',s=>s.delete(k)),keys:()=>run('readonly',s=>s.getAllKeys())};
+  /* if the browser blocks IndexedDB (some private modes, Safari opening a downloaded file), fall back to localStorage */
+  const TX=LS+'text:';
+  const lsKeys=()=>{const a=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(TX))a.push(k.slice(TX.length))}}catch(e){}return a};
+  return {
+    put:b=>raw.put(b).catch(()=>{localStorage.setItem(TX+b.key,JSON.stringify(b))}),
+    get:k=>raw.get(k).catch(()=>null).then(r=>r||lsGet(TX+k)),
+    del:k=>raw.del(k).catch(()=>{}).then(()=>{try{localStorage.removeItem(TX+k)}catch(e){}}),
+    keys:()=>raw.keys().catch(()=>[]).then(a=>[...new Set([...a,...lsKeys()])]),
+    works:()=>raw.keys().then(()=>true,()=>{try{localStorage.setItem(TX+'_t','1');localStorage.removeItem(TX+'_t');return true}catch(e){return false}})
+  };
 })();
 const timeout=(p,ms=9000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
 
@@ -387,7 +398,7 @@ function go(v,anim=true,keep=false){
 }
 /* keep=true: the layout changed (resize, fonts, text size), so hold the saved place instead of re-reading it */
 function update(keep){
-  const [f,l,t]=visible();if(!keep)rec.pos=f;rec.pct=book.blocks.length>1?f/(book.blocks.length-1):0;
+  const [f,l,t]=visible();if(!keep)rec.pos=f;rec.pct=book.blocks.length>1?rec.pos/(book.blocks.length-1):0;
   const c=book.chapters[ch];
   $('#rChap').textContent=c.title;
   const a=view*cols+1,b=Math.min(view*cols+cols,Math.max(1,Math.round((vp.scrollWidth+parseFloat(flow.style.columnGap))/step)));
@@ -473,7 +484,7 @@ async function renderShelf(){
   const top=recs.find(r=>have.has(r.key)),rb=$('#resume');
   if(top){rb.hidden=false;rb.dataset.key=top.key;rb.dataset.title=top.title;rb.innerHTML=`<span>Continue reading: ${esc(top.title)}</span><b>${Math.round((top.pct||0)*100)}%</b>`}else rb.hidden=true;
   if(!recs.length){el.innerHTML='<p class="empty">Books you open will sit here, with your place and bookmarks saved.</p>';return}
-  el.innerHTML=recs.map(r=>{const n=(r.bookmarks||[]).length;return `<div class="spine"><button class="open" data-key="${esc(r.key)}" data-title="${esc(r.title)}"><b>${esc(r.title)}</b><span>${Math.round((r.pct||0)*100)}% read · ${n} bookmark${n===1?'':'s'}</span><em>${have.has(r.key)?'Continue reading →':'Choose the PDF again to continue'}</em></button><button class="rm" data-key="${esc(r.key)}" aria-label="Remove ${esc(r.title)} from shelf">Remove</button></div>`}).join('');
+  el.innerHTML=recs.map(r=>{const n=(r.bookmarks||[]).length;return `<div class="spine"><button class="open" data-key="${esc(r.key)}" data-title="${esc(r.title)}"><b>${esc(r.title)}</b><span>${Math.round((r.pct||0)*100)}% read · ${n} bookmark${n===1?'':'s'}</span><em>${have.has(r.key)?'Continue reading →':'Choose the PDF once more \u2014 after that it opens by itself'}</em></button><button class="rm" data-key="${esc(r.key)}" aria-label="Remove ${esc(r.title)} from shelf">Remove</button></div>`}).join('');
 }
 async function resume(key,title){
   let b=null;try{b=await idb.get(key)}catch(e){}
@@ -496,12 +507,13 @@ $('#shelf').addEventListener('click',e=>{
   const s=e.target.closest('.open');if(s)resume(s.dataset.key,s.dataset.title);
 });
 $('#resume').onclick=e=>resume(e.currentTarget.dataset.key,e.currentTarget.dataset.title);
+idb.works().then(ok=>{$('#nostore').hidden=ok});
 renderShelf();
 {
   const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const mine=ios?'#w-ios':/Android/.test(ua)?'#w-android':'#w-desk';document.querySelector(mine).classList.add('mine');
   if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)document.body.classList.add('installed');
-  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 }
 }
 </script>

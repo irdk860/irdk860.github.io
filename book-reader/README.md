@@ -38,7 +38,7 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 
 ## Limits
 
-- Books, places and bookmarks are kept per device and per browser. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
+- Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 
 - Works with PDFs that contain real text. Scanned books (photos of pages) have no text to reflow.
 - Images in the PDF aren't shown.
