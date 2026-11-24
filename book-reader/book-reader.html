@@ -87,10 +87,15 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 .ribbon{position:absolute;top:-7px;right:calc(var(--px) - 10px);width:20px;height:0;background:var(--ribbon);clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);transition:height .3s ease;pointer-events:none}
 .ribbon.on{height:84px}
 .vp{position:absolute;top:var(--pt);bottom:var(--pb);left:var(--px);right:var(--px);overflow:hidden}
-.flow{height:100%;column-fill:auto;will-change:transform;font-family:Literata,Georgia,serif;font-size:var(--fs);line-height:1.62;text-align:justify;hyphens:auto;widows:2;orphans:2}
+.flow{height:100%;display:flex;font-family:Literata,Georgia,serif;font-size:var(--fs);line-height:1.62;text-align:justify;hyphens:auto;widows:2;orphans:2}
 .flow.fade{animation:fade .22s ease}
 @keyframes fade{from{opacity:.25}}
 .flow p{margin:0;text-indent:1.4em}
+.pg{flex:none;height:100%;overflow:hidden}
+.flow.measure{position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;height:auto}
+.flow p.cont{text-indent:0}
+.flow p.split{text-align-last:justify}
+.pg>h2:first-child{margin-top:.5em}
 .flow p.first{text-indent:0}
 .flow p.cap::first-letter{float:left;font:600 3.3em/.82 Fraunces,serif;margin:.06em .09em 0 0;color:var(--cloth)}
 :root[data-theme=dark] .flow p.cap::first-letter{color:#c9a4cf}
@@ -160,7 +165,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 5 · 24 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 6 · 24 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -377,51 +382,79 @@ async function openFile(file){
 /* ---------- reader ---------- */
 const flow=$('#flow'),vp=$('#vp'),bookEl=$('#book');
 function chapterAt(i){let k=0;book.chapters.forEach((c,j)=>{if(c.start<=i)k=j});return k}
-function renderChapter(k){
-  ch=k;const c=book.chapters[k];let h='',first=true,afterHead=false;
-  for(let i=c.start;i<c.end;i++){const b=book.blocks[i];
-    if(b.t==='h'){h+=`<h2 data-i="${i}">${esc(b.s)}</h2>`;first=true;afterHead=true}
-    else if(b.t==='b'){h+=`<p class="brk" data-i="${i}">* * *</p>`;first=true}
-    else if(b.t==='l'){h+=`<p class="first toc" data-i="${i}">${esc(b.s)}</p>`;first=true}
-    else{h+=`<p data-i="${i}" class="${first?'first':''}${afterHead&&/^[A-Za-z]/.test(b.s)?' cap':''}">${esc(b.s)}</p>`;first=false;afterHead=false}
-  }
-  flow.innerHTML=h;measure();
+/* ---- pagination: the app cuts each chapter into fixed pages itself, so it works the same in every browser ---- */
+let pages=[],pw=300,gap=48;
+const meas=document.createElement('div');meas.className='flow measure';meas.setAttribute('aria-hidden','true');
+const mpg=document.createElement('div');mpg.className='pg';meas.appendChild(mpg);vp.appendChild(meas);
+function blockEl(i,cls){
+  const b=book.blocks[i];let e;
+  if(b.t==='h'){e=document.createElement('h2');e.textContent=b.s}
+  else{e=document.createElement('p');
+    if(b.t==='b'){e.className='brk';e.textContent='* * *'}
+    else if(b.t==='l'){e.className='first toc';e.textContent=b.s}
+    else{if(cls)e.className=cls;e.textContent=b.s}}
+  e.dataset.i=i;return e;
 }
-function measure(){
-  const two=vp.clientWidth>=760;cols=two?2:1;
-  bookEl.classList.toggle('two',two);
+function renderChapter(k){
+  ch=k;const c=book.chapters[k];
+  const W=vp.clientWidth,H=vp.clientHeight;
+  cols=W>=760?2:1;bookEl.classList.toggle('two',cols===2);
   const px=parseFloat(getComputedStyle(bookEl).getPropertyValue('--px'))||40;
-  let gap=two?px*2:px*2;const W=vp.clientWidth;
-  if(two&&(W-gap)%2)gap+=1;
-  flow.style.width=W+'px';flow.style.height=vp.clientHeight+'px';
-  flow.style.columnCount=cols;flow.style.columnGap=gap+'px';
-  step=(W-gap*(cols-1))/cols+gap;
-  /* count columns from where the last paragraph ends (scrollWidth isn't reliable for columns in Safari) */
-  const vl=vp.getBoundingClientRect().left;let last=0;
-  for(const r of (flow.lastElementChild?flow.lastElementChild.getClientRects():[]))last=Math.max(last,Math.floor((r.left-vl+off+2)/step));
-  totalCols=last+1;
-  views=Math.max(1,Math.ceil(totalCols/cols));
+  gap=Math.round(px*2);pw=Math.max(1,Math.floor((W-gap*(cols-1))/cols));
+  mpg.style.width=pw+'px';mpg.style.height=H+'px';mpg.innerHTML='';pages=[];
+  if(W<60||H<60){pages=[{html:'',start:[c.start],a:c.start,z:c.end-1}];views=1;return}
+  const fits=()=>{const e=mpg.lastElementChild;return !e||e.getBoundingClientRect().bottom<=mpg.getBoundingClientRect().top+H+0.5};
+  const finish=()=>{
+    const carry=[];/* never leave a heading alone at the bottom of a page */
+    while(mpg.children.length>1&&mpg.lastElementChild.tagName==='H2'){const e=mpg.lastElementChild;e.remove();carry.unshift(e)}
+    const kids=[...mpg.children],ids=kids.map(e=>+e.dataset.i);
+    pages.push({html:mpg.innerHTML,start:kids.filter(e=>!e.classList.contains('cont')).map(e=>+e.dataset.i),a:ids[0],z:ids[ids.length-1]});
+    mpg.innerHTML='';carry.forEach(e=>mpg.appendChild(e));
+  };
+  let first=true,afterHead=false;
+  for(let i=c.start;i<c.end;i++){
+    const b=book.blocks[i];
+    const cls=b.t==='p'?((first?'first':'')+(afterHead&&/^[A-Za-z“"‘]/.test(b.s)?' cap':'')).trim():'';
+    if(b.t==='h'){first=true;afterHead=true}else if(b.t==='p'){first=false;afterHead=false}else{first=true;afterHead=false}
+    let el=blockEl(i,cls);mpg.appendChild(el);
+    if(fits())continue;
+    if(b.t!=='p'){el.remove();if(mpg.children.length)finish();mpg.appendChild(el);continue}
+    let words=b.s.split(' ');
+    for(let guard=0;guard<500;guard++){
+      let lo=0,hi=words.length-1;/* most words that still fit on this page */
+      while(lo<hi){const mid=(lo+hi+1)>>1;el.textContent=words.slice(0,mid).join(' ');if(fits())lo=mid;else hi=mid-1}
+      if(lo>0){
+        el.textContent=words.slice(0,lo).join(' ');el.classList.add('split');finish();
+        words=words.slice(lo);el=blockEl(i,'cont');el.textContent=words.join(' ');mpg.appendChild(el);
+      }else{
+        el.remove();el.textContent=words.join(' ');
+        if(!mpg.children.length){mpg.appendChild(el);break}/* page too small for even one word */
+        finish();mpg.appendChild(el);
+      }
+      if(fits())break;
+    }
+  }
+  if(mpg.children.length||!pages.length)finish();
+  mpg.innerHTML='';
+  views=Math.max(1,Math.ceil(pages.length/cols));
 }
 function visible(){
   /* returns [first block that starts on these pages, last block shown, first block touching these pages] */
-  const vr=vp.getBoundingClientRect();let s=null,l=null,t=null;
-  for(const el of flow.children){
-    const rs=el.getClientRects();if(!rs.length)continue;
-    if(rs[0].left>=vr.right-2)break;
-    const i=+el.dataset.i;
-    if(rs[0].left>=vr.left-2&&s===null)s=i;
-    for(const r of rs){if(r.width&&r.right>vr.left+2&&r.left<vr.right-2){if(t===null)t=i;l=i;break}}
-  }
-  const c=book.chapters[ch];t=t??c.start;return [s??t,l??t,t];
+  const c=book.chapters[ch],ps=pages.slice(view*cols,view*cols+cols).filter(Boolean);
+  if(!ps.length)return [c.start,c.start,c.start];
+  const t=ps[0].a,s=ps.flatMap(p=>p.start)[0];
+  return [s??t,ps[ps.length-1].z,t];
 }
 function viewOf(i){
-  const el=flow.querySelector(`[data-i="${i}"]`);if(!el)return 0;
-  const r=el.getClientRects()[0];if(!r)return 0;
-  const x=r.left-vp.getBoundingClientRect().left+off;
-  return Math.min(views-1,Math.max(0,Math.floor((x+2)/step/cols)));
+  let p=pages.findIndex(q=>q.start.includes(i));
+  if(p<0)p=pages.findIndex(q=>q.a<=i&&i<=q.z);
+  if(p<0)p=i>=(pages[pages.length-1]||{z:0}).z?pages.length-1:0;
+  return Math.min(views-1,Math.max(0,Math.floor(p/cols)));
 }
 function go(v,anim=true,keep=false){
-  view=Math.max(0,Math.min(views-1,v));off=Math.round(view*cols*step);flow.style.transform=`translateX(${-off}px)`;
+  view=Math.max(0,Math.min(views-1,v));
+  let h='';for(let k=view*cols;k<view*cols+cols;k++)h+=`<div class="pg" style="width:${pw}px">${pages[k]?pages[k].html:''}</div>`;
+  flow.style.gap=gap+'px';flow.innerHTML=h;
   if(anim){flow.classList.remove('fade');void flow.offsetWidth;flow.classList.add('fade')}
   update(keep);
 }
@@ -430,7 +463,7 @@ function update(keep){
   const [f,l,t]=visible();if(!keep)rec.pos=f;rec.pct=book.blocks.length>1?rec.pos/(book.blocks.length-1):0;
   const c=book.chapters[ch];
   $('#rChap').textContent=c.title;
-  const a=view*cols+1,b=Math.min(view*cols+cols,totalCols);
+  const totalCols=pages.length,a=view*cols+1,b=Math.min(view*cols+cols,totalCols);
   $('#pages').textContent=`Chapter ${ch+1} of ${book.chapters.length} · ${a===b||cols===1?'page '+a:'pages '+a+'–'+b} of ${totalCols}`;
   $('#pct').textContent=Math.round(rec.pct*100)+'%';$('#progFill').style.width=rec.pct*100+'%';
   const on=rec.bookmarks.some(m=>m.i>=t&&m.i<=l);
@@ -438,7 +471,7 @@ function update(keep){
   $('#mark').setAttribute('aria-label',on?'Remove bookmark from this page':'Bookmark this page');
   saveSoon();
 }
-function goBlock(i,keep){const k=chapterAt(i);if(k!==ch||!flow.firstChild)renderChapter(k);if(keep)rec.pos=i;go(viewOf(i),true,keep)}
+function goBlock(i,keep){const k=chapterAt(i);if(k!==ch||!pages.length)renderChapter(k);if(keep)rec.pos=i;go(viewOf(i),true,keep)}
 function next(){if(view<views-1)go(view+1);else if(ch<book.chapters.length-1){renderChapter(ch+1);go(0)}else toast('You\u2019ve reached the end of the book')}
 function prev(){if(view>0)go(view-1);else if(ch>0){renderChapter(ch-1);go(views-1)}}
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2200)}
@@ -491,7 +524,7 @@ bookEl.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTou
   if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy))dx<0?next():prev();
   else if(Math.abs(dx)<8&&Math.abs(dy)<8&&!getSelection().toString()){const r=bookEl.getBoundingClientRect(),x=e.changedTouches[0].clientX-r.left;if(x>r.width*0.7)next();else if(x<r.width*0.3)prev()}
 });
-vp.addEventListener('scroll',()=>{if(vp.scrollLeft)vp.scrollLeft=0});
+vp.addEventListener('scroll',()=>{if(vp.scrollLeft||vp.scrollTop){vp.scrollLeft=0;vp.scrollTop=0}});
 let rt=0;const ro=new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(relayout,140)});ro.observe(vp);
 window.addEventListener('pagehide',saveNow);
 try{document.fonts&&document.fonts.ready.then(()=>relayout())}catch(e){}
