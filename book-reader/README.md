@@ -43,6 +43,32 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - In Chrome or Edge, click the install icon in the address bar, or
 - download [`book-reader.html`](book-reader.html) and open it in any browser (it needs an internet connection the first time to load PDF.js and the fonts).
 
+## Add more voices to your phone
+
+Book Reader reads aloud with the voices already on your phone or computer. Adding a better voice, or a voice for another language, takes a couple of minutes. Voices only ever come from your phone's own settings or official app store, never from a website, so you don't need to download anything from the internet.
+
+**iPhone or iPad**
+1. Open the **Settings** app and go to **Accessibility → Spoken Content → Voices**.
+2. Tap the language you want (for example **English**, **Español** or **العربية**), then tap a voice.
+3. Tap the download button next to a voice marked **Enhanced** or **Premium**. These sound the most natural. They can be 100 MB or more, so use Wi-Fi.
+4. Close Book Reader fully and open it again. The new voice appears in the player under **Voice settings** (the sliders button).
+
+Apple's official guide: [Adjust voice and speed on iPhone and iPad](https://support.apple.com/111798)
+
+**Android**
+1. Open the **Settings** app and go to **Accessibility → Text-to-speech output**. On some phones it's under **System → Languages & input**.
+2. Next to the speech engine (usually **Speech Services by Google**), tap the settings ⚙ button.
+3. Tap **Install voice data**, choose the language you want and download it. Use Wi-Fi.
+4. Close Book Reader fully and open it again. The new voice appears under **Voice settings** in the player.
+
+If your phone doesn't have Google's voices, or they need updating, get the official app from Google Play: [Speech Services by Google](https://play.google.com/store/apps/details?id=com.google.android.tts). Google's guide: [Text-to-speech output](https://support.google.com/accessibility/android/answer/6006983)
+
+**Computer**
+- **Windows:** Settings → Time & language → Speech → Manage voices → Add voices. In Microsoft Edge, Book Reader can also use Microsoft's natural online voices without installing anything.
+- **Mac:** System Settings → Accessibility → Spoken Content → System voice → Manage Voices.
+
+Voices for Swahili, Amharic, Hausa and Irish are often not available on phones. When a book's language has no voice, Book Reader lets you pick a voice from another language instead.
+
 ## Limits
 
 - Book translation needs Chrome 138+ or Edge on a computer; phones and Safari can't translate books yet. Reading aloud needs a voice for that language on the device: Swahili, Amharic, Hausa and Irish voices are rare, and the app says when one is missing.
