@@ -1,6 +1,6 @@
 // Lightweight app cache. No cross-origin isolation is needed after removing the local AI model.
 // Pages always come from the network when online, so phones get the newest version.
-const CACHE = 'book-reader-v14';
+const CACHE = 'book-reader-v15';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',

@@ -13,6 +13,7 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
+- **voice settings inside the app**: choose the voice, speed, pitch and volume, and tap **Test voice** to hear it, all from the player. If a book's language has no voice on the device, the app offers voices from other languages instead
 - **looks the way you like**: tap **Customise** (or the palette icon while reading) to choose a colour theme or your own colours, a reading font and title font, text size, line spacing, page margins, justified or left-aligned text, and a background picture
 - **book covers**: the shelf shows each book's cover, made from the PDF's first page; tap **Picture** to use your own image or a plain cover
 - **in your language**: the app comes in English, Spanish, French, German, Portuguese, Italian, Chinese, Hindi, Japanese, Arabic (right to left), Swahili, Amharic, Hausa and Irish. It starts in your device's language; change it with the globe button
@@ -47,7 +48,7 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - Book translation needs Chrome 138+ or Edge on a computer; phones and Safari can't translate books yet. Reading aloud needs a voice for that language on the device: Swahili, Amharic, Hausa and Irish voices are rare, and the app says when one is missing.
 - The app's translations were written with AI help; corrections from native speakers are welcome.
 
-- Listening uses the voices built into your device, so it works offline. For a more natural voice on iPhone, download a Premium or Enhanced voice in Settings → Accessibility → Spoken Content → Voices. The app hides the novelty sound-effect voices some devices include (Bells, Bubbles, Organ and so on) and picks the most natural voice for your region automatically. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
+- Listening uses the voices built into your device, so it works offline. The app hides the novelty sound-effect voices some devices include (Bells, Bubbles, Organ and so on) and picks the most natural voice for your region automatically. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
 - Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 
