@@ -15,6 +15,9 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
 - **looks the way you like**: tap **Customise** (or the palette icon while reading) to choose a colour theme or your own colours, a reading font and title font, text size, line spacing, page margins, justified or left-aligned text, and a background picture
 - **book covers**: the shelf shows each book's cover, made from the PDF's first page; tap **Picture** to use your own image or a plain cover
+- **in your language**: the app comes in English, Spanish, French, German, Portuguese, Italian, Chinese, Hindi, Japanese, Arabic (right to left), Swahili, Amharic, Hausa and Irish. It starts in your device's language; change it with the globe button
+- **books in any language**: it recognises the book's language, reads it aloud in a matching voice, lays out Chinese and Japanese correctly and turns Arabic and Hebrew books right to left
+- **translate a book** (Chrome or Edge on a computer): pick a language and the book is translated on your device, chapter by chapter, and read aloud in that language. Translations are saved, so they don't need redoing
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
 Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
@@ -40,6 +43,9 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - download [`book-reader.html`](book-reader.html) and open it in any browser (it needs an internet connection the first time to load PDF.js and the fonts).
 
 ## Limits
+
+- Book translation needs Chrome 138+ or Edge on a computer; phones and Safari can't translate books yet. Reading aloud needs a voice for that language on the device: Swahili, Amharic, Hausa and Irish voices are rare, and the app says when one is missing.
+- The app's translations were written with AI help; corrections from native speakers are welcome.
 
 - Listening uses the voices built into your device, so it works offline. For a more natural voice on iPhone, download a Premium or Enhanced voice in Settings → Accessibility → Spoken Content → Voices. The app hides the novelty sound-effect voices some devices include (Bells, Bubbles, Organ and so on) and picks the most natural voice for your region automatically. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
