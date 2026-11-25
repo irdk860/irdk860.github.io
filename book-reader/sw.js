@@ -1,6 +1,6 @@
 // Keeps Book Reader working offline. The page itself is fetched fresh whenever there's a connection,
 // so updates show up straight away; the cached copy is only used offline.
-const CACHE = 'book-reader-v7';
+const CACHE = 'book-reader-v8';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
@@ -16,6 +16,8 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // the natural-voice model (~90 MB) is stored by the voice engine itself; don't keep a second copy
+  if (/(^|\.)(huggingface\.co|hf\.co)$/.test(url.hostname)) return;
   const isPage = req.mode === 'navigate' || (url.origin === location.origin && /\.(html|webmanifest)$|\/$/.test(url.pathname));
   if (isPage) {
     // network first: always get the newest version, fall back to the cache when offline

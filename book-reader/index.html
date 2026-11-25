@@ -72,10 +72,17 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 .note{font-size:13px;color:var(--soft);text-align:center;max-width:36em;margin:0}
 /* reader */
 .reader{height:100dvh;display:grid;grid-template-rows:auto 1fr auto auto}
-.player{display:flex;align-items:center;gap:6px;padding:8px max(2vw,10px);background:var(--paper);border-top:1px solid var(--line)}
+.player{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px max(2vw,10px);background:var(--paper);border-top:1px solid var(--line)}
 .player .tp{width:52px;height:52px;border-radius:50%;border:0;background:var(--cloth);color:var(--clothink);font-size:18px;display:grid;place-items:center;flex:none}
 .player .ib{font-size:18px}
 .player .rate{min-width:58px;font-weight:600;font-size:15px;border:1px solid var(--line)}
+.nbox{flex:1 0 100%;display:grid;gap:8px;padding:6px 4px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.nbox p{margin:0;font-size:15px;line-height:1.45}
+.nbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.nbar i{display:block;height:100%;width:0;background:var(--ribbon);transition:width .2s}
+.nbtns{display:flex;flex-wrap:wrap;gap:8px}
+.nbtn{min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--cloth);color:var(--clothink);font-weight:600;font-size:15px}
+.nbtn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
+.tstat{font-size:13px;color:var(--soft);white-space:nowrap}
 .player select{flex:1;min-width:0;max-width:300px;height:44px;font:15px Literata,Georgia,serif;color:var(--ink);background:var(--desk);border:1px solid var(--line);border-radius:8px;padding:0 8px}
 .player .lab{font-size:13px;color:var(--soft);white-space:nowrap}
 .flow .reading{background:light-dark(rgba(211,53,42,.09),rgba(211,53,42,.2));border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
@@ -174,7 +181,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 7 · 25 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 8 · 25 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -194,11 +201,12 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
     <button class="turn" id="next" aria-label="Next page">›</button>
   </div>
   <div class="player" id="player" hidden>
+    <div class="nbox" id="nbox" hidden><p id="ntext"></p><div class="nbar" id="nbar" hidden><i></i></div><div class="nbtns"><button class="nbtn" id="ngo">Download natural voices</button><button class="nbtn alt" id="nno">Not now</button></div></div>
     <button class="ib" id="tback" aria-label="Previous paragraph" title="Previous paragraph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6v12M18 6l-9 6 9 6z" fill="currentColor" stroke="currentColor" stroke-linejoin="round"/></svg></button>
     <button class="tp" id="tplay" aria-label="Play"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></button>
     <button class="ib" id="tfwd" aria-label="Next paragraph" title="Next paragraph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6v12M6 6l9 6-9 6z" fill="currentColor" stroke="currentColor" stroke-linejoin="round"/></svg></button>
     <button class="ib rate" id="trate" aria-label="Reading speed" title="Reading speed">1×</button>
-    <span class="lab">Voice</span><select id="voice" aria-label="Voice"></select>
+    <span class="lab">Voice</span><select id="voice" aria-label="Voice"></select><span class="tstat" id="tstat" aria-live="polite"></span>
     <button class="ib" id="tclose" aria-label="Stop listening" title="Stop listening">✕</button>
   </div>
   <div class="foot"><button class="ib mob" id="prev2" aria-label="Previous page">‹</button><span id="pages"></span><div class="prog" id="prog" title="Jump to a point in the book"><i id="progFill"></i></div><span id="pct"></span><button class="ib mob" id="next2" aria-label="Next page">›</button></div>
@@ -520,18 +528,118 @@ function sentences(s){
   }
   return out.length?out:[{o:0,t:s}];
 }
+function nice(v){return /premium|enhanced|natural|neural|siri|google|online/i.test(v.name)}
 function voices(){
   if(!synth)return [];
   const all=synth.getVoices(),lang=(navigator.language||'en').slice(0,2).toLowerCase();
   const mine=all.filter(v=>(v.lang||'').toLowerCase().startsWith(lang));
-  return (mine.length?mine:all).slice().sort((a,b)=>(b.localService-a.localService)||a.name.localeCompare(b.name));
+  /* the most natural-sounding device voices first */
+  return (mine.length?mine:all).slice().sort((a,b)=>(nice(b)-nice(a))||(b.localService-a.localService)||a.name.localeCompare(b.name));
+}
+
+/* ---------- natural AI voices: the Kokoro model, run on the device ---------- */
+const NEURAL_OK=!/claudeusercontent|claude\.ai|anthropic/.test(location.hostname)&&typeof Worker!=='undefined';
+const KVOICES=[['af_heart','Heart','US, female'],['af_bella','Bella','US, female'],['af_nicole','Nicole','US, female, soft'],['am_michael','Michael','US, male'],['am_fenrir','Fenrir','US, male'],['bf_emma','Emma','UK, female'],['bf_isabella','Isabella','UK, female'],['bm_george','George','UK, male'],['bm_fable','Fable','UK, male']];
+const WORKER=`import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";
+let tts=null;
+self.onmessage=async e=>{const m=e.data;
+  if(m.type==='load'){try{const files={};
+    tts=await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm",progress_callback:p=>{
+      if(p&&p.status==='progress'&&p.file){files[p.file]=[p.loaded||0,p.total||0];let a=0,b=0;for(const k in files){a+=files[k][0];b+=files[k][1]}self.postMessage({type:'progress',loaded:a,total:b})}}});
+    self.postMessage({type:'ready'})}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)})}}
+  else if(m.type==='gen'){try{const a=await tts.generate(m.text,{voice:m.voice,speed:m.speed});const d=a.audio;
+    self.postMessage({type:'audio',id:m.id,audio:d,sr:a.sampling_rate},[d.buffer])}catch(err){self.postMessage({type:'genError',id:m.id,msg:String(err&&err.message||err)})}}
+};`;
+const neural={state:'off',w:null,seq:0,wait:{},ready:null,pct:0,err:'',ask:false};
+const isK=v=>typeof v==='string'&&v.startsWith('k:');
+function neuralLoad(){
+  if(neural.ready)return neural.ready;
+  neural.ready=new Promise((res,rej)=>{
+    let w;
+    try{w=window.__mockNeural?window.__mockNeural():new Worker(URL.createObjectURL(new Blob([WORKER],{type:'text/javascript'})),{type:'module'})}
+    catch(e){neural.state='error';neural.err='This browser can’t run the natural voices.';nUI();rej(e);return}
+    neural.w=w;neural.state='loading';neural.pct=0;nUI();
+    w.onmessage=e=>{const m=e.data;
+      if(m.type==='progress'){neural.pct=m.total?m.loaded/m.total:0;neural.mb=m.total/1048576;nUI()}
+      else if(m.type==='ready'){neural.state='ready';lsSet(LS+'neural',1);nUI();res()}
+      else if(m.type==='error'){neural.state='error';neural.err=m.msg;nUI();rej(new Error(m.msg))}
+      else{const p=neural.wait[m.id];delete neural.wait[m.id];if(p)m.type==='audio'?p.res(m):p.rej(new Error(m.msg))}};
+    w.onerror=e=>{neural.state='error';neural.err=(e&&e.message)||'The voice engine failed to start.';nUI();rej(new Error(neural.err))};
+    w.postMessage({type:'load'});
+  });
+  neural.ready.catch(()=>{neural.ready=null;try{neural.w&&neural.w.terminate()}catch(e){}neural.w=null});
+  return neural.ready;
+}
+function neuralGen(text,voice,speed){const id=++neural.seq;return new Promise((res,rej)=>{neural.wait[id]={res,rej};neural.w.postMessage({type:'gen',id,text,voice,speed})})}
+function nUI(){
+  const box=$('#nbox');if(!box)return;
+  const show=neural.ask||neural.state==='loading'||neural.state==='error';
+  box.hidden=!show;if(!show)return;
+  const t=$('#ntext'),bar=$('#nbar'),go=$('#ngo'),no=$('#nno');
+  bar.hidden=neural.state!=='loading';go.hidden=neural.state==='loading';no.hidden=neural.state==='loading';
+  if(neural.state==='loading'){
+    const again=lsGet(LS+'neural');
+    t.textContent=again?'Loading the natural voice…':`Downloading natural voices… ${Math.round(neural.pct*100)}%${neural.mb?` of ${Math.round(neural.mb)} MB`:''}`;
+    bar.firstElementChild.style.width=Math.round(neural.pct*100)+'%';
+  }else if(neural.state==='error'){
+    t.textContent='Couldn’t load the natural voices. Check your internet connection and try again.';go.textContent='Try again';no.textContent='Use device voice';
+  }else{
+    t.textContent='Want a more human-sounding voice? Natural AI voices are a one-time download of about 90 MB. After that they’re free, private and work offline.';
+    go.textContent='Download natural voices';no.textContent='Not now';
+  }
+}
+/* sentences per block, and audio made ahead of time so there are no gaps */
+const sc=new Map(),gcache=new Map();
+function sentsOf(i){const b=book.blocks[i];if(!b||b.t==='b'||!b.s)return null;if(!sc.has(i))sc.set(i,sentences(b.s));return sc.get(i)}
+function nextPos(i,si){si++;while(i<book.blocks.length){const s=sentsOf(i);if(s&&si<s.length)return [i,si];i++;si=0}return null}
+function getAudio(i,si){
+  const k=`${book.key}|${tts.voice}|${tts.rate}|${i}|${si}`;
+  if(!gcache.has(k)){const p=neuralGen(sentsOf(i)[si].t,tts.voice.slice(2),tts.rate);p.catch(()=>{});gcache.set(k,p);
+    while(gcache.size>14)gcache.delete(gcache.keys().next().value)}
+  return gcache.get(k);
+}
+function actx(){
+  if(!tts.ac){const C=window.AudioContext||window.webkitAudioContext;if(C)tts.ac=new C()}
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){} /* play even with the iPhone's silent switch on */
+  if(tts.ac&&tts.ac.state!=='running')tts.ac.resume().catch(()=>{});
+  return tts.ac;
+}
+function unlockAudio(){const ac=actx();if(!ac)return;try{const b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0)}catch(e){}}
+function hush(){
+  tts.token++;if(synth)synth.cancel();
+  if(tts.src){try{tts.src.onended=null;tts.src.stop()}catch(e){}tts.src=null}
+  const st=$('#tstat');if(st)st.textContent='';
+}
+function useDeviceVoice(msg){tts.voice='';lsSet(LS+'voice','');fillVoices();if(msg)toast(msg)}
+function speakNeural(){
+  const my=++tts.token,i=tts.i,si=tts.si,p=getAudio(i,si);
+  let n=[i,si];for(let k=0;k<3&&n;k++){n=nextPos(n[0],n[1]);if(n)getAudio(n[0],n[1])}
+  const wait=setTimeout(()=>{if(my===tts.token)$('#tstat').textContent='Preparing voice…'},350);
+  p.then(a=>{
+    clearTimeout(wait);if(my!==tts.token||!tts.playing)return;$('#tstat').textContent='';
+    const ac=actx();if(!ac){useDeviceVoice('Audio isn’t available here, so the device voice is being used.');speak();return}
+    const buf=ac.createBuffer(1,a.audio.length,a.sr);
+    if(buf.copyToChannel)buf.copyToChannel(a.audio,0);else buf.getChannelData(0).set(a.audio);
+    const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);
+    src.onended=()=>{if(my!==tts.token||!tts.playing)return;tts.fails=0;tts.si++;speak()};
+    tts.src=src;src.start();
+  }).catch(()=>{
+    clearTimeout(wait);if(my!==tts.token||!tts.playing)return;
+    if((tts.fails=(tts.fails||0)+1)>=3){useDeviceVoice('The natural voice had a problem, so I switched to your device voice.');tts.fails=0;speak();return}
+    tts.si++;speak();
+  });
 }
 function fillVoices(){
   const sel=$('#voice'),vs=voices();
-  sel.innerHTML='<option value="">Default voice</option>'+vs.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
-  sel.value=vs.some(v=>v.name===tts.voice)?tts.voice:'';
+  let h='';
+  if(NEURAL_OK)h+='<optgroup label="Natural AI voices (free, on your device)">'+KVOICES.map(([id,n,d])=>`<option value="k:${id}">${n} — ${d}</option>`).join('')+'</optgroup>';
+  h+='<optgroup label="Device voices"><option value="">Best device voice</option>'+vs.map(v=>`<option value="${esc(v.name)}">${nice(v)?'★ ':''}${esc(v.name)} (${esc(v.lang)})</option>`).join('')+'</optgroup>';
+  sel.innerHTML=h;
+  if(isK(tts.voice)&&!NEURAL_OK)tts.voice='';
+  sel.value=(isK(tts.voice)||vs.some(v=>v.name===tts.voice))?tts.voice:'';
 }
-if(synth){synth.cancel();fillVoices();try{synth.addEventListener('voiceschanged',fillVoices)}catch(e){synth.onvoiceschanged=fillVoices}}
+if(synth){synth.cancel();try{synth.addEventListener('voiceschanged',fillVoices)}catch(e){synth.onvoiceschanged=fillVoices}}
+fillVoices();
 function pageOf(i,o){
   let p=pages.findIndex(q=>q.parts&&q.parts.some(r=>r.i===i&&o>=r.from&&o<=r.from+r.len));
   return p<0?pages.findIndex(q=>q.a<=i&&i<=q.z):p;
@@ -559,8 +667,14 @@ function speak(){
   }
   if(tts.i>=book.blocks.length){pause();toast('That’s the end of the book');return}
   showReading();
+  if(isK(tts.voice)){
+    if(neural.state==='ready'){speakNeural();return}
+    if(lsGet(LS+'neural')||neural.state==='loading'){const my=++tts.token;neuralLoad().then(()=>{if(my===tts.token&&tts.playing)speak()},()=>{if(my===tts.token&&tts.playing){useDeviceVoice();speak()}});return}
+    neural.ask=true;nUI();pause();return;
+  }
+  if(!synth){pause();toast('This browser can\u2019t read aloud with device voices');return}
   const u=new SpeechSynthesisUtterance(tts.sents[tts.si].t);
-  u.rate=tts.rate;const v=voices().find(x=>x.name===tts.voice);if(v){u.voice=v;u.lang=v.lang}
+  u.rate=tts.rate;const v=tts.voice?voices().find(x=>x.name===tts.voice):voices()[0];if(v){u.voice=v;u.lang=v.lang}
   const my=++tts.token;
   u.onstart=()=>{tts.fails=0};
   u.onend=()=>{if(my!==tts.token||!tts.playing)return;tts.si++;speak()};
@@ -571,7 +685,7 @@ function speak(){
   synth.speak(u);
 }
 function startAt(i,o){
-  tts.token++;synth.cancel();tts.i=i;tts.sents=null;tts.si=0;
+  hush();tts.i=i;tts.sents=null;tts.si=0;
   const b=book.blocks[i];
   if(b&&b.s){tts.sents=sentences(b.s);let k=tts.sents.findIndex(s=>s.o>=o-1);if(k<0)k=tts.sents.length-1;tts.si=Math.max(0,k)}
 }
@@ -585,21 +699,24 @@ async function keepAwake(on){
       else if(!on&&tts.lock){await tts.lock.release();tts.lock=null}}catch(e){}
 }
 function play(){
-  if(!synth){toast('This browser can’t read aloud');return}
+  if(!synth&&!NEURAL_OK){toast('This browser can\u2019t read aloud');return}
+  unlockAudio();
   if(tts.sents===null&&tts.si===0&&!tts.started)fromPage();
   tts.started=true;tts.playing=true;playUI();keepAwake(true);speak();
 }
-function pause(){tts.playing=false;tts.token++;if(synth)synth.cancel();playUI();keepAwake(false)}
+function pause(){tts.playing=false;hush();playUI();keepAwake(false)}
 function playUI(){
   const b=$('#tplay');b.innerHTML=tts.playing?'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>':'<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';b.setAttribute('aria-label',tts.playing?'Pause':'Play');
   $('#listen').classList.toggle('on',tts.on);
 }
 function openPlayer(){
-  if(!synth){toast('This browser can’t read aloud');return}
+  if(!synth&&!NEURAL_OK){toast('This browser can\u2019t read aloud');return}
+  if(NEURAL_OK&&!isK(tts.voice)&&!lsGet(LS+'neural')&&!lsGet(LS+'nask'))neural.ask=true;
+  nUI();
   tts.on=true;tts.started=false;$('#player').hidden=false;fromPage();tts.started=true;fillVoices();$('#trate').textContent=tts.rate+'×';
   play();requestAnimationFrame(relayout);
 }
-function closePlayer(){pause();tts.on=false;$('#player').hidden=true;markReading();playUI();requestAnimationFrame(relayout)}
+function closePlayer(){neural.ask=false;nUI();pause();tts.on=false;$('#player').hidden=true;markReading();playUI();requestAnimationFrame(relayout)}
 function skip(d){
   if(!book)return;let i=tts.i+d;
   while(i>0&&i<book.blocks.length&&book.blocks[i].t==='b')i+=d;
@@ -612,8 +729,17 @@ $('#listen').onclick=()=>tts.on?closePlayer():openPlayer();
 $('#tplay').onclick=()=>tts.playing?pause():play();
 $('#tback').onclick=()=>skip(-1);$('#tfwd').onclick=()=>skip(1);
 $('#tclose').onclick=closePlayer;
-$('#trate').onclick=()=>{const k=RATES.indexOf(tts.rate);tts.rate=RATES[(k+1)%RATES.length];$('#trate').textContent=tts.rate+'×';lsSet(LS+'rate',tts.rate);if(tts.playing){tts.token++;synth.cancel();speak()}};
-$('#voice').onchange=e=>{tts.voice=e.target.value;lsSet(LS+'voice',tts.voice);if(tts.playing){tts.token++;synth.cancel();speak()}};
+$('#trate').onclick=()=>{const k=RATES.indexOf(tts.rate);tts.rate=RATES[(k+1)%RATES.length];$('#trate').textContent=tts.rate+'×';lsSet(LS+'rate',tts.rate);if(tts.playing){hush();speak()}};
+$('#voice').onchange=e=>{tts.voice=e.target.value;lsSet(LS+'voice',tts.voice);unlockAudio();
+  if(isK(tts.voice)&&neural.state!=='ready'&&!lsGet(LS+'neural')){neural.ask=true;nUI();return}
+  neural.ask=false;nUI();if(tts.playing){hush();speak()}else if(isK(tts.voice)&&neural.state!=='ready')neuralLoad().catch(()=>{})};
+$('#ngo').onclick=()=>{
+  unlockAudio();neural.ask=false;lsSet(LS+'nask',1);
+  if(!isK(tts.voice)){tts.voice='k:af_heart';lsSet(LS+'voice',tts.voice);fillVoices()}
+  const was=tts.playing;if(was)pause();
+  neuralLoad().then(()=>{nUI();tts.playing=true;playUI();keepAwake(true);speak()}).catch(()=>{});
+};
+$('#nno').onclick=()=>{neural.ask=false;lsSet(LS+'nask',1);if(neural.state==='error')neural.state='off';if(isK(tts.voice))useDeviceVoice();nUI();if(!tts.playing)play()};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&tts.playing&&/iPhone|iPad|iPod/.test(navigator.userAgent))pause();else if(!document.hidden&&tts.playing)keepAwake(true)});
 
 /* drawer */

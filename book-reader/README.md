@@ -13,6 +13,7 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
+- **natural AI voices**: pick one of nine human-sounding voices (US and UK, male and female) from the Kokoro model. It's a one-time download of about 90 MB, then it runs on your device, free, private and offline. The best built-in device voices are marked ★ too
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
 Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
