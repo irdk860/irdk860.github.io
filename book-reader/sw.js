@@ -1,6 +1,6 @@
 // Lightweight app cache. No cross-origin isolation is needed after removing the local AI model.
 // Pages always come from the network when online, so phones get the newest version.
-const CACHE = 'book-reader-v15';
+const CACHE = 'book-reader-v16';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
@@ -16,7 +16,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin && !/cdnjs\.cloudflare\.com$/.test(url.hostname)) return;
+  if (url.origin !== self.location.origin && !/cdnjs\.cloudflare\.com$|cdn\.jsdelivr\.net$/.test(url.hostname)) return; // voice engine files are kept for offline use
   if (url.pathname.endsWith('/version.json')) return; // the update check must always ask GitHub
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request, {cache:'no-store'}).then(response => {

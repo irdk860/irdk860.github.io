@@ -14,6 +14,7 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
 - **voice settings inside the app**: choose the voice, speed, pitch and volume, and tap **Test voice** to hear it, all from the player. If a book's language has no voice on the device, the app offers voices from other languages instead
+- **voice library**: tap **Get more voices** (in Voice settings, or in the globe menu) to download extra voices straight into the app, in dozens of languages including Swahili and Arabic. They're free, work offline afterwards and sound the same on every phone and computer. Voices are open-source [Piper](https://github.com/rhasspy/piper) voices, run in the browser with [vits-web](https://github.com/diffusionstudio/vits-web)
 - **looks the way you like**: tap **Customise** (or the palette icon while reading) to choose a colour theme or your own colours, a reading font and title font, text size, line spacing, page margins, justified or left-aligned text, and a background picture
 - **book covers**: the shelf shows each book's cover, made from the PDF's first page; tap **Picture** to use your own image or a plain cover
 - **in your language**: the app comes in English, Spanish, French, German, Portuguese, Italian, Chinese, Hindi, Japanese, Arabic (right to left), Swahili, Amharic, Hausa and Irish. It starts in your device's language; change it with the globe button
@@ -44,6 +45,8 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - download [`book-reader.html`](book-reader.html) and open it in any browser (it needs an internet connection the first time to load PDF.js and the fonts).
 
 ## Add more voices to your phone
+
+The easiest way is inside the app: open the player, tap the **Voice settings** button (the sliders) and then **Get more voices**. Voices you download there live inside Book Reader. If you'd also like better voices for your whole phone, you can add them in your phone's settings:
 
 Book Reader reads aloud with the voices already on your phone or computer. Adding a better voice, or a voice for another language, takes a couple of minutes. Voices only ever come from your phone's own settings or official app store, never from a website, so you don't need to download anything from the internet.
 
