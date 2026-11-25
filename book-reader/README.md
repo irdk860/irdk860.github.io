@@ -41,7 +41,7 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 
 ## Limits
 
-- Listening uses the voices built into your device, so it works offline. For a more natural voice on iPhone, download a Premium or Enhanced voice in Settings → Accessibility → Spoken Content → Voices. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
+- Listening uses the voices built into your device, so it works offline. For a more natural voice on iPhone, download a Premium or Enhanced voice in Settings → Accessibility → Spoken Content → Voices. The app hides the novelty sound-effect voices some devices include (Bells, Bubbles, Organ and so on) and picks the most natural voice for your region automatically. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
 - Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 

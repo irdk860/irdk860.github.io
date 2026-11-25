@@ -83,6 +83,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 .nbtns{display:flex;flex-wrap:wrap;gap:8px}
 .nbtn{min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--cloth);color:var(--clothink);font-weight:600;font-size:15px}
 .nbtn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
+.vtip{order:-1;flex:1 0 100%;display:flex;align-items:center;gap:6px;margin:0 0 4px;padding:8px 4px 10px 6px;border-bottom:1px solid var(--line);font-size:14px;line-height:1.45}.vtip span{flex:1}.vtipx{flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-weight:600;font-size:14px}
 .tstat{font-size:13px;color:var(--soft);white-space:nowrap}
 .player select{flex:1;min-width:0;max-width:300px;height:44px;font:15px var(--uf);color:var(--ink);background:var(--desk);border:1px solid var(--line);border-radius:8px;padding:0 8px}
 .player .lab{font-size:13px;color:var(--soft);white-space:nowrap}
@@ -245,7 +246,7 @@ body.hasbg .top,body.hasbg .foot,body.hasbg .player{background:color-mix(in srgb
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 12 · 25 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 13 · 25 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -270,6 +271,7 @@ body.hasbg .top,body.hasbg .foot,body.hasbg .player{background:color-mix(in srgb
     <button class="tp" id="tplay" aria-label="Play"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></button>
     <button class="ib" id="tfwd" aria-label="Next paragraph" title="Next paragraph"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6v12M6 6l9 6-9 6z" fill="currentColor" stroke="currentColor" stroke-linejoin="round"/></svg></button>
     <button class="ib rate" id="trate" aria-label="Reading speed" title="Reading speed">1×</button>
+    <p class="vtip" id="vtip" hidden><span>For a more natural voice, on your iPhone go to <b>Settings → Accessibility → Spoken Content → Voices → English</b>, download a voice marked <b>Enhanced</b> or <b>Premium</b>, then reopen Book Reader.</span><button class="vtipx" id="vtipx">Got it</button></p>
     <span class="lab">Device voice</span><select id="voice" aria-label="Device voice"></select><span class="tstat" id="tstat" aria-live="polite"></span>
     <button class="ib" id="tclose" aria-label="Stop listening" title="Stop listening">✕</button>
   </div>
@@ -325,7 +327,7 @@ body.hasbg .top,body.hasbg .foot,body.hasbg .player{background:color-mix(in srgb
 <script>
 {
 const $=s=>document.querySelector(s);
-const APP_VERSION=12; /* keep in step with version.json */
+const APP_VERSION=13; /* keep in step with version.json */
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LS='bookreader:';
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -739,14 +741,29 @@ function sentences(s){
   }
   return out.length?out:[{o:0,t:s}];
 }
-function nice(v){return /premium|enhanced|natural|neural|siri|google|online/i.test(v.name)}
+/* iPhones and Macs include novelty "voices" that are really sound effects or instruments: never offer them */
+const NOVELTY=/^(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|pipe organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|agnes|bruce|vicki|victoria)\b/i;
+const NOVELTY_URI=/speech\.synthesis\.voice\.(albert|badnews|bahh|bells|boing|bubbles|cellos|deranged|goodnews|hysterical|jester|organ|pipeorgan|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess|agnes|bruce|vicki|victoria)/i;
+const OLDSTYLE=/eloquence|^(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley)\b/i;
+const GOOD=/^(samantha|daniel|karen|moira|tessa|rishi|arthur|martha|catherine|gordon|aaron|nicky|serena|kate|oliver|allison|ava|susan|tom|zoe|evan|joelle|nathan|noelle|fiona|veena|alex|stephanie|jamie|lee|matilda|isha|google|microsoft)/i;
+const isNovelty=v=>NOVELTY.test(v.name)||NOVELTY_URI.test(v.voiceURI||'');
+/* how natural a voice sounds, roughly: higher is better */
+function quality(v){
+  const n=(v.name+' '+(v.voiceURI||'')).toLowerCase();
+  return /premium/.test(n)?100:/neural|natural|online/.test(n)?95:/enhanced/.test(n)?90:/siri/.test(n)?85:/google/.test(n)?80:GOOD.test(v.name)?60:OLDSTYLE.test(n)?10:40;
+}
+function nice(v){return quality(v)>=80}
+const normLang=l=>(l||'').toLowerCase().replace('_','-');
 function voices(){
   if(!synth)return [];
-  const all=synth.getVoices(),lang=(navigator.language||'en').slice(0,2).toLowerCase();
-  const mine=all.filter(v=>(v.lang||'').toLowerCase().startsWith(lang));
-  /* the most natural-sounding device voices first */
-  return (mine.length?mine:all).slice().sort((a,b)=>(nice(b)-nice(a))||(b.localService-a.localService)||a.name.localeCompare(b.name));
+  const all=synth.getVoices().filter(v=>!isNovelty(v)),loc=normLang(navigator.language||'en-GB'),lang=loc.slice(0,2);
+  let mine=all.filter(v=>normLang(v.lang).startsWith(lang));if(!mine.length)mine=all;
+  const score=v=>quality(v)+(normLang(v.lang)===loc?6:0)+(v.default?2:0)+(v.localService?1:0);
+  const seen=new Map();for(const v of mine){const k=v.name+'|'+v.lang;if(!seen.has(k)||score(v)>score(seen.get(k)))seen.set(k,v)}
+  return [...seen.values()].sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name));
 }
+const ACCENTS={'en-gb':'UK','en-us':'US','en-au':'Australian','en-ie':'Irish','en-in':'Indian','en-za':'South African','en-nz':'New Zealand','en-ca':'Canadian'};
+const accent=v=>ACCENTS[normLang(v.lang)]||v.lang;
 
 /* No downloaded voice model: use the speech voices already available on the device. */
 const sc=new Map();
@@ -760,8 +777,14 @@ function fillVoices(){
   const old=tts.voice;
   /* Forget old Kokoro voice IDs and select a voice installed on this device. */
   if(old.startsWith('k:')){tts.voice='';lsSet(LS+'voice','');}
-  sel.innerHTML='<option value="">Best available device voice</option>'+vs.map(v=>`<option value="${esc(v.name)}">${nice(v)?'★ ':''}${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  if(tts.voice&&NOVELTY.test(tts.voice)){tts.voice='';lsSet(LS+'voice','')}
+  const grp=(label,list)=>list.length?`<optgroup label="${label}">`+list.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} \u2014 ${esc(accent(v))}</option>`).join('')+'</optgroup>':'';
+  const best=vs[0];
+  sel.innerHTML=`<option value="">Best voice${best?` (${esc(best.name)})`:''}</option>`+grp('Natural voices',vs.filter(v=>quality(v)>=80))+grp('Standard voices',vs.filter(v=>quality(v)>=40&&quality(v)<80))+grp('Older, robotic voices',vs.filter(v=>quality(v)<40));
   sel.value=vs.some(v=>v.name===tts.voice)?tts.voice:'';
+  /* on iPhone, suggest downloading a high-quality voice if none is installed */
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const tip=$('#vtip');if(tip)tip.hidden=!(ios&&vs.length&&!vs.some(v=>quality(v)>=85)&&!lsGet(LS+'vtipno'));
 }
 if(synth){synth.cancel();try{synth.addEventListener('voiceschanged',fillVoices)}catch(e){synth.onvoiceschanged=fillVoices}}
 fillVoices();
@@ -847,6 +870,7 @@ $('#tplay').onclick=()=>tts.playing?pause():play();
 $('#tback').onclick=()=>skip(-1);$('#tfwd').onclick=()=>skip(1);
 $('#tclose').onclick=closePlayer;
 $('#trate').onclick=()=>{const k=RATES.indexOf(tts.rate);tts.rate=RATES[(k+1)%RATES.length];$('#trate').textContent=tts.rate+'×';lsSet(LS+'rate',tts.rate);if(tts.playing){hush();speak()}};
+$('#vtipx').onclick=()=>{lsSet(LS+'vtipno',1);$('#vtip').hidden=true};
 $('#voice').onchange=e=>{
   tts.voice=e.target.value;
   lsSet(LS+'voice',tts.voice);
