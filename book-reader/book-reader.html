@@ -181,7 +181,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 9 · 25 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 10 · 25 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -545,48 +545,83 @@ const WORKER=`import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@
 let tts=null;
 self.onmessage=async e=>{const m=e.data;
   if(m.type==='load'){try{const files={};
-    tts=await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm",progress_callback:p=>{
+    tts=await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:m.dtype,device:m.device,progress_callback:p=>{
       if(p&&p.status==='progress'&&p.file){files[p.file]=[p.loaded||0,p.total||0];let a=0,b=0;for(const k in files){a+=files[k][0];b+=files[k][1]}self.postMessage({type:'progress',loaded:a,total:b})}}});
-    self.postMessage({type:'ready',iso:!!self.crossOriginIsolated,cores:self.navigator&&navigator.hardwareConcurrency||1})}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)})}}
+    await tts.generate("Ready.",{voice:"af_heart"}); /* warm up: the first run is always the slowest */
+    self.postMessage({type:'ready'})}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)})}}
   else if(m.type==='gen'){try{const a=await tts.generate(m.text,{voice:m.voice,speed:m.speed});const d=a.audio;
     self.postMessage({type:'audio',id:m.id,audio:d,sr:a.sampling_rate},[d.buffer])}catch(err){self.postMessage({type:'genError',id:m.id,msg:String(err&&err.message||err)})}}
 };`;
-const neural={state:'off',w:null,seq:0,wait:{},ready:null,pct:0,err:'',ask:false};
+/* two engines: "gpu" runs on the graphics chip (WebGPU, much faster, ~310 MB), "cpu" on the processor (~90 MB) */
+const MODES={gpu:{device:'webgpu',dtype:'fp32',mb:310},cpu:{device:'wasm',dtype:'q8',mb:90}};
+const neural={state:'off',mode:null,w:null,seq:0,wait:{},ready:null,pct:0,prompt:null,offer:'cpu'};
 const isK=v=>typeof v==='string'&&v.startsWith('k:');
-function neuralLoad(){
-  if(neural.ready)return neural.ready;
-  neural.ready=new Promise((res,rej)=>{
+const savedMode=()=>{const v=lsGet(LS+'neural');return v==='gpu'?'gpu':v?'cpu':null};
+let gpuCheck=null;
+function hasGPU(){
+  if(!gpuCheck)gpuCheck=(async()=>{try{if(window.__mockGPU!==undefined)return window.__mockGPU;if(!navigator.gpu)return false;return !!(await navigator.gpu.requestAdapter())}catch(e){return false}})();
+  return gpuCheck;
+}
+function dropWorker(){
+  try{neural.w&&neural.w.terminate()}catch(e){}neural.w=null;neural.ready=null;
+  for(const k in neural.wait){neural.wait[k].rej(new Error('stopped'));delete neural.wait[k]}
+  gcache.clear();
+}
+function neuralLoad(mode){
+  mode=mode||savedMode()||'cpu';
+  if(neural.ready&&neural.mode===mode)return neural.ready;
+  if(neural.ready)dropWorker();
+  neural.mode=mode;
+  const p=neural.ready=new Promise((res,rej)=>{
     let w;
     try{w=window.__mockNeural?window.__mockNeural():new Worker(URL.createObjectURL(new Blob([WORKER],{type:'text/javascript'})),{type:'module'})}
-    catch(e){neural.state='error';neural.err='This browser can’t run the natural voices.';nUI();rej(e);return}
-    neural.w=w;neural.state='loading';neural.pct=0;nUI();
+    catch(e){neural.state='error';nUI();rej(e);return}
+    neural.w=w;neural.state='loading';neural.pct=0;neural.mb=0;nUI();
     w.onmessage=e=>{const m=e.data;
       if(m.type==='progress'){neural.pct=m.total?m.loaded/m.total:0;neural.mb=m.total/1048576;nUI()}
-      else if(m.type==='ready'){neural.state='ready';neural.iso=m.iso;lsSet(LS+'neural',1);nUI();res()}
-      else if(m.type==='error'){neural.state='error';neural.err=m.msg;nUI();rej(new Error(m.msg))}
-      else{const p=neural.wait[m.id];delete neural.wait[m.id];if(p)m.type==='audio'?p.res(m):p.rej(new Error(m.msg))}};
-    w.onerror=e=>{neural.state='error';neural.err=(e&&e.message)||'The voice engine failed to start.';nUI();rej(new Error(neural.err))};
-    w.postMessage({type:'load'});
+      else if(m.type==='ready'){neural.state='ready';lsSet(LS+'neural',mode);nUI();res()}
+      else if(m.type==='error'){neural.state=mode==='gpu'?'gpufail':'error';nUI();rej(new Error(m.msg))}
+      else{const q=neural.wait[m.id];delete neural.wait[m.id];if(q)m.type==='audio'?q.res(m):q.rej(new Error(m.msg))}};
+    w.onerror=e=>{neural.state=mode==='gpu'?'gpufail':'error';nUI();rej(new Error((e&&e.message)||'engine failed'))};
+    w.postMessage({type:'load',device:MODES[mode].device,dtype:MODES[mode].dtype});
   });
-  neural.ready.catch(()=>{neural.ready=null;try{neural.w&&neural.w.terminate()}catch(e){}neural.w=null});
-  return neural.ready;
+  p.catch(()=>{if(neural.ready===p)dropWorker()});
+  return p;
 }
 function neuralGen(text,voice,speed){const id=++neural.seq;return new Promise((res,rej)=>{neural.wait[id]={res,rej};neural.w.postMessage({type:'gen',id,text,voice,speed})})}
+function startReading(){nUI();tts.playing=true;playUI();keepAwake(true);speak()}
+function declineNeural(){neural.prompt=null;if(neural.state==='error'||neural.state==='gpufail')neural.state='off';if(isK(tts.voice))useDeviceVoice();nUI();if(tts.on&&!tts.playing)play()}
+function loadThenRead(mode){unlockAudio();neural.prompt=null;if(tts.playing)pause();neuralLoad(mode).then(startReading).catch(()=>{})}
+/* what to offer the first time someone opens the player */
+async function offerNeural(){
+  if(!NEURAL_OK)return;
+  const saved=savedMode(),gpu=await hasGPU();
+  if(!tts.on)return;
+  if(!saved&&!isK(tts.voice)&&!lsGet(LS+'nask')){neural.offer=gpu?'gpu':'cpu';neural.prompt='first';nUI()}
+  else if(saved==='cpu'&&gpu&&!lsGet(LS+'gpuask')){neural.prompt='upgrade';nUI()}
+}
 function nUI(){
   const box=$('#nbox');if(!box)return;
-  const show=neural.ask||neural.state==='loading'||neural.state==='error';
+  const st=neural.state,show=!!neural.prompt||st==='loading'||st==='error'||st==='gpufail';
   box.hidden=!show;if(!show)return;
   const t=$('#ntext'),bar=$('#nbar'),go=$('#ngo'),no=$('#nno');
-  bar.hidden=neural.state!=='loading';go.hidden=neural.state==='loading';no.hidden=neural.state==='loading';
-  if(neural.state==='loading'){
-    const again=lsGet(LS+'neural');
-    t.textContent=again?'Loading the natural voice…':`Downloading natural voices… ${Math.round(neural.pct*100)}%${neural.mb?` of ${Math.round(neural.mb)} MB`:''}`;
-    bar.firstElementChild.style.width=Math.round(neural.pct*100)+'%';
-  }else if(neural.state==='error'){
-    t.textContent='Couldn’t load the natural voices. Check your internet connection and try again.';go.textContent='Try again';no.textContent='Use device voice';
+  const set=(text,a,fa,b,fb)=>{t.textContent=text;go.textContent=a;no.textContent=b;go.onclick=fa;no.onclick=fb;go.hidden=no.hidden=false;bar.hidden=true};
+  if(st==='loading'){
+    const again=savedMode()===neural.mode;
+    t.textContent=again?'Loading the natural voice…':`Downloading ${neural.mode==='gpu'?'fast ':''}natural voices… ${Math.round(neural.pct*100)}%${neural.mb?` of ${Math.round(neural.mb)} MB`:''}`;
+    bar.hidden=false;bar.firstElementChild.style.width=Math.round(neural.pct*100)+'%';go.hidden=no.hidden=true;
+  }else if(st==='gpufail'){
+    set('Fast mode didn’t work on this device, so it can use standard mode instead.',savedMode()==='cpu'?'Use standard mode':`Use standard mode (${MODES.cpu.mb} MB)`,()=>loadThenRead('cpu'),'Use device voice',declineNeural);
+  }else if(st==='error'){
+    set('Couldn’t load the natural voices. Check your internet connection and try again.','Try again',()=>loadThenRead(neural.mode),'Use device voice',declineNeural);
+  }else if(neural.prompt==='upgrade'){
+    set(`Make the natural voice faster? Fast mode runs it on your graphics chip so reading flows without pauses. One-time download of about ${MODES.gpu.mb} MB.`,
+      'Turn on fast mode',()=>{lsSet(LS+'gpuask',1);loadThenRead('gpu')},'Keep current',()=>{lsSet(LS+'gpuask',1);neural.prompt=null;nUI()});
   }else{
-    t.textContent='Want a more human-sounding voice? Natural AI voices are a one-time download of about 90 MB. After that they’re free, private and work offline.';
-    go.textContent='Download natural voices';no.textContent='Not now';
+    const g=neural.offer==='gpu';
+    set(`Want a more human-sounding voice? Natural AI voices are a one-time download of about ${MODES[neural.offer].mb} MB${g?' and run on your graphics chip for smooth reading':''}. After that they’re free, private and work offline.`,
+      'Download natural voices',()=>{lsSet(LS+'nask',1);if(g)lsSet(LS+'gpuask',1);if(!isK(tts.voice)){tts.voice='k:af_heart';lsSet(LS+'voice',tts.voice);fillVoices()}loadThenRead(neural.offer)},
+      'Not now',()=>{lsSet(LS+'nask',1);declineNeural()});
   }
 }
 /* sentences per block, and audio made ahead of time so there are no gaps */
@@ -620,8 +655,8 @@ function trim(x,sr){
 }
 /* load the voice in the background as soon as a book opens, and warm it up, so play starts at once */
 function preloadVoice(){
-  if(!NEURAL_OK||!isK(tts.voice)||!lsGet(LS+'neural')||neural.state==='ready'||neural.state==='loading')return;
-  neuralLoad().then(()=>neuralGen('Ready.',tts.voice.slice(2),tts.rate).catch(()=>{})).catch(()=>{});
+  if(!NEURAL_OK||!isK(tts.voice)||!savedMode()||neural.state==='ready'||neural.state==='loading')return;
+  neuralLoad(savedMode()).catch(()=>{});
 }
 function speakNeural(){
   const my=++tts.token,i=tts.i,si=tts.si,p=getAudio(i,si);
@@ -682,8 +717,8 @@ function speak(){
   showReading();
   if(isK(tts.voice)){
     if(neural.state==='ready'){speakNeural();return}
-    if(lsGet(LS+'neural')||neural.state==='loading'){const my=++tts.token;neuralLoad().then(()=>{if(my===tts.token&&tts.playing)speak()},()=>{if(my===tts.token&&tts.playing){useDeviceVoice();speak()}});return}
-    neural.ask=true;nUI();pause();return;
+    if(savedMode()||neural.state==='loading'){const my=++tts.token;neuralLoad(neural.state==='loading'?neural.mode:savedMode()).then(()=>{if(my===tts.token&&tts.playing)speak()},()=>{if(my===tts.token&&tts.playing){useDeviceVoice();speak()}});return}
+    pause();hasGPU().then(g=>{neural.offer=g?'gpu':'cpu';neural.prompt='first';nUI()});return;
   }
   if(!synth){pause();toast('This browser can\u2019t read aloud with device voices');return}
   const u=new SpeechSynthesisUtterance(tts.sents[tts.si].t);
@@ -724,12 +759,11 @@ function playUI(){
 }
 function openPlayer(){
   if(!synth&&!NEURAL_OK){toast('This browser can\u2019t read aloud');return}
-  if(NEURAL_OK&&!isK(tts.voice)&&!lsGet(LS+'neural')&&!lsGet(LS+'nask'))neural.ask=true;
-  nUI();
+  offerNeural();
   tts.on=true;tts.started=false;$('#player').hidden=false;fromPage();tts.started=true;fillVoices();$('#trate').textContent=tts.rate+'×';
   play();requestAnimationFrame(relayout);
 }
-function closePlayer(){neural.ask=false;nUI();pause();tts.on=false;$('#player').hidden=true;markReading();playUI();requestAnimationFrame(relayout)}
+function closePlayer(){neural.prompt=null;nUI();pause();tts.on=false;$('#player').hidden=true;markReading();playUI();requestAnimationFrame(relayout)}
 function skip(d){
   if(!book)return;let i=tts.i+d;
   while(i>0&&i<book.blocks.length&&book.blocks[i].t==='b')i+=d;
@@ -744,15 +778,8 @@ $('#tback').onclick=()=>skip(-1);$('#tfwd').onclick=()=>skip(1);
 $('#tclose').onclick=closePlayer;
 $('#trate').onclick=()=>{const k=RATES.indexOf(tts.rate);tts.rate=RATES[(k+1)%RATES.length];$('#trate').textContent=tts.rate+'×';lsSet(LS+'rate',tts.rate);if(tts.playing){hush();speak()}};
 $('#voice').onchange=e=>{tts.voice=e.target.value;lsSet(LS+'voice',tts.voice);unlockAudio();
-  if(isK(tts.voice)&&neural.state!=='ready'&&!lsGet(LS+'neural')){neural.ask=true;nUI();return}
-  neural.ask=false;nUI();if(tts.playing){hush();speak()}else if(isK(tts.voice)&&neural.state!=='ready')neuralLoad().catch(()=>{})};
-$('#ngo').onclick=()=>{
-  unlockAudio();neural.ask=false;lsSet(LS+'nask',1);
-  if(!isK(tts.voice)){tts.voice='k:af_heart';lsSet(LS+'voice',tts.voice);fillVoices()}
-  const was=tts.playing;if(was)pause();
-  neuralLoad().then(()=>{nUI();tts.playing=true;playUI();keepAwake(true);speak()}).catch(()=>{});
-};
-$('#nno').onclick=()=>{neural.ask=false;lsSet(LS+'nask',1);if(neural.state==='error')neural.state='off';if(isK(tts.voice))useDeviceVoice();nUI();if(!tts.playing)play()};
+  if(isK(tts.voice)&&neural.state!=='ready'&&!savedMode()){if(tts.playing)pause();hasGPU().then(g=>{neural.offer=g?'gpu':'cpu';neural.prompt='first';nUI()});return}
+  if(neural.prompt==='first')neural.prompt=null;nUI();if(tts.playing){hush();speak()}else if(isK(tts.voice)&&neural.state!=='ready')neuralLoad(savedMode()).catch(()=>{})};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&tts.playing&&/iPhone|iPad|iPod/.test(navigator.userAgent))pause();else if(!document.hidden&&tts.playing)keepAwake(true)});
 
 /* drawer */

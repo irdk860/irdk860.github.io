@@ -1,6 +1,6 @@
 // Keeps Book Reader working offline. The page itself is fetched fresh whenever there's a connection,
 // so updates show up straight away; the cached copy is only used offline.
-const CACHE = 'book-reader-v9';
+const CACHE = 'book-reader-v10';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
