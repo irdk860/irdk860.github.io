@@ -14,7 +14,8 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Book Reader</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <style>
 /* VOICE: quiet, literary, unhurried — a reading room, not an app.
    IDEA: a cloth-bound hardback lying open on a desk; the PDF becomes its pages.
@@ -181,7 +182,7 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
       <div id="w-desk"><h3>Computer</h3><ol><li>In Chrome or Edge, click the install icon at the right of the address bar.</li><li>Or download the single file and open it in any browser.</li></ol><a class="dl" href="book-reader.html" download="book-reader.html">Download the file</a></div>
     </div>
   </div>
-  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 8 · 25 Nov 2026</span></p>
+  <p class="note">Your PDF is read inside your browser and never uploaded. Each book’s text, your reading place and bookmarks are kept in this browser on this device, so you can carry on without choosing the file again. Works with text PDFs; scanned page images have no text to reflow. <span style="white-space:nowrap">Version 9 · 25 Nov 2026</span></p>
   <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 </section>
 
@@ -220,8 +221,8 @@ button:focus-visible,.cover:focus-visible{outline:3px solid var(--ribbon);outlin
 </aside>
 <div class="toast" id="toast" hidden></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 {
 const $=s=>document.querySelector(s);
@@ -506,6 +507,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeou
 function showReader(){
   $('#home').hidden=true;$('#reader').hidden=false;$('#rTitle').textContent=book.title;document.title=book.title;
   requestAnimationFrame(()=>{goBlock(rec.pos||0,true);saveNow();if(rec.pos>0)toast('Picked up where you left off')});
+  setTimeout(()=>{if(typeof preloadVoice==='function')preloadVoice()},800);
 }
 function toggleMark(){
   const [f,l,t]=visible();const here=rec.bookmarks.filter(m=>m.i>=t&&m.i<=l);
@@ -523,7 +525,7 @@ function sentences(s){
   const out=[],re=/[^.!?…]*[.!?…]+["'”’)\]]*(\s+|$)|[^.!?…]+$/g;let m;
   while((m=re.exec(s))&&m[0]){
     let t=m[0],st=m.index;
-    while(t.length>230){let cut=t.lastIndexOf(', ',220);if(cut<60)cut=t.lastIndexOf(' ',220);if(cut<1)cut=220;out.push({o:st,t:t.slice(0,cut+1)});st+=cut+1;t=t.slice(cut+1)}
+    while(t.length>150){let cut=t.lastIndexOf(', ',140);if(cut<40)cut=t.lastIndexOf('; ',140);if(cut<40)cut=t.lastIndexOf(' ',140);if(cut<1)cut=140;out.push({o:st,t:t.slice(0,cut+1)});st+=cut+1;t=t.slice(cut+1)}
     if(t.trim())out.push({o:st,t});
   }
   return out.length?out:[{o:0,t:s}];
@@ -546,7 +548,7 @@ self.onmessage=async e=>{const m=e.data;
   if(m.type==='load'){try{const files={};
     tts=await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm",progress_callback:p=>{
       if(p&&p.status==='progress'&&p.file){files[p.file]=[p.loaded||0,p.total||0];let a=0,b=0;for(const k in files){a+=files[k][0];b+=files[k][1]}self.postMessage({type:'progress',loaded:a,total:b})}}});
-    self.postMessage({type:'ready'})}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)})}}
+    self.postMessage({type:'ready',iso:!!self.crossOriginIsolated,cores:self.navigator&&navigator.hardwareConcurrency||1})}catch(err){self.postMessage({type:'error',msg:String(err&&err.message||err)})}}
   else if(m.type==='gen'){try{const a=await tts.generate(m.text,{voice:m.voice,speed:m.speed});const d=a.audio;
     self.postMessage({type:'audio',id:m.id,audio:d,sr:a.sampling_rate},[d.buffer])}catch(err){self.postMessage({type:'genError',id:m.id,msg:String(err&&err.message||err)})}}
 };`;
@@ -561,7 +563,7 @@ function neuralLoad(){
     neural.w=w;neural.state='loading';neural.pct=0;nUI();
     w.onmessage=e=>{const m=e.data;
       if(m.type==='progress'){neural.pct=m.total?m.loaded/m.total:0;neural.mb=m.total/1048576;nUI()}
-      else if(m.type==='ready'){neural.state='ready';lsSet(LS+'neural',1);nUI();res()}
+      else if(m.type==='ready'){neural.state='ready';neural.iso=m.iso;lsSet(LS+'neural',1);nUI();res()}
       else if(m.type==='error'){neural.state='error';neural.err=m.msg;nUI();rej(new Error(m.msg))}
       else{const p=neural.wait[m.id];delete neural.wait[m.id];if(p)m.type==='audio'?p.res(m):p.rej(new Error(m.msg))}};
     w.onerror=e=>{neural.state='error';neural.err=(e&&e.message)||'The voice engine failed to start.';nUI();rej(new Error(neural.err))};
@@ -611,15 +613,27 @@ function hush(){
   const st=$('#tstat');if(st)st.textContent='';
 }
 function useDeviceVoice(msg){tts.voice='';lsSet(LS+'voice','');fillVoices();if(msg)toast(msg)}
+/* cut quiet lead-in and tail so sentences follow each other naturally */
+function trim(x,sr){
+  const th=0.01,keep=Math.round(sr*0.06);let s=0,e=x.length-1;
+  while(s<x.length&&Math.abs(x[s])<th)s++;while(e>s&&Math.abs(x[e])<th)e--;
+  if(e<=s)return x;return x.subarray(Math.max(0,s-keep),Math.min(x.length,e+keep*2));
+}
+/* load the voice in the background as soon as a book opens, and warm it up, so play starts at once */
+function preloadVoice(){
+  if(!NEURAL_OK||!isK(tts.voice)||!lsGet(LS+'neural')||neural.state==='ready'||neural.state==='loading')return;
+  neuralLoad().then(()=>neuralGen('Ready.',tts.voice.slice(2),tts.rate).catch(()=>{})).catch(()=>{});
+}
 function speakNeural(){
   const my=++tts.token,i=tts.i,si=tts.si,p=getAudio(i,si);
-  let n=[i,si];for(let k=0;k<3&&n;k++){n=nextPos(n[0],n[1]);if(n)getAudio(n[0],n[1])}
+  let n=[i,si];for(let k=0;k<5&&n;k++){n=nextPos(n[0],n[1]);if(n)getAudio(n[0],n[1])}
   const wait=setTimeout(()=>{if(my===tts.token)$('#tstat').textContent='Preparing voice…'},350);
   p.then(a=>{
     clearTimeout(wait);if(my!==tts.token||!tts.playing)return;$('#tstat').textContent='';
     const ac=actx();if(!ac){useDeviceVoice('Audio isn’t available here, so the device voice is being used.');speak();return}
-    const buf=ac.createBuffer(1,a.audio.length,a.sr);
-    if(buf.copyToChannel)buf.copyToChannel(a.audio,0);else buf.getChannelData(0).set(a.audio);
+    const pcm=trim(a.audio,a.sr);
+    const buf=ac.createBuffer(1,pcm.length,a.sr);
+    if(buf.copyToChannel)buf.copyToChannel(pcm,0);else buf.getChannelData(0).set(pcm);
     const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);
     src.onended=()=>{if(my!==tts.token||!tts.playing)return;tts.fails=0;tts.si++;speak()};
     tts.src=src;src.start();
@@ -832,7 +846,15 @@ renderShelf();
   const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const mine=ios?'#w-ios':/Android/.test(ua)?'#w-android':'#w-desk';document.querySelector(mine).classList.add('mine');
   if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)document.body.classList.add('installed');
-  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+  /* safety switch: if the PDF library is blocked while isolated, turn isolation off and reload once */
+  if(window.crossOriginIsolated&&!window.pdfjsLib&&navigator.onLine&&window.caches){let tried=false;try{tried=sessionStorage.getItem('br-noiso')}catch(e){}
+    if(!tried){try{sessionStorage.setItem('br-noiso','1')}catch(e){}caches.open('br-flags').then(c=>c.put('noiso',new Response('1'))).then(()=>location.reload()).catch(()=>{})}}
+  /* once the service worker takes over, reload once (from the home screen only) so the faster multi-core voice mode is on */
+  if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker&&navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    let done=false;try{done=sessionStorage.getItem('br-iso')}catch(e){}
+    if(!window.crossOriginIsolated&&!done&&!document.querySelector('#home').hidden){try{sessionStorage.setItem('br-iso','1')}catch(e){}location.reload()}
+  });
 }
 }
 </script>
