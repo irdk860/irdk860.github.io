@@ -12,6 +12,7 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - lets you bookmark pages with a ribbon and jump back to them
 - keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
+- **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
 Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
@@ -37,6 +38,8 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 - download [`book-reader.html`](book-reader.html) and open it in any browser (it needs an internet connection the first time to load PDF.js and the fonts).
 
 ## Limits
+
+- Listening uses the voices built into your device, so it works offline. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
 - Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 
