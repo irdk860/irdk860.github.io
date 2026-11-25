@@ -13,7 +13,8 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
-- **natural AI voices**: pick one of nine human-sounding voices (US and UK, male and female) from the Kokoro model. It's a one-time download of about 90 MB, then it runs on your device, free, private and offline. On computers and phones whose browser supports WebGPU it offers **fast mode**, which runs the voice on the graphics chip so reading flows without pauses (a one-time download of about 310 MB); otherwise it uses standard mode (about 90 MB). The voice loads in the background when you open a book. The best built-in device voices are marked ★ too
+- **looks the way you like**: tap **Customise** (or the palette icon while reading) to choose a colour theme or your own colours, a reading font and title font, text size, line spacing, page margins, justified or left-aligned text, and a background picture
+- **book covers**: the shelf shows each book's cover, made from the PDF's first page; tap **Picture** to use your own image or a plain cover
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
 Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
@@ -40,13 +41,17 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 
 ## Limits
 
-- Listening uses the voices built into your device, so it works offline. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
+- Listening uses the voices built into your device, so it works offline. For a more natural voice on iPhone, download a Premium or Enhanced voice in Settings → Accessibility → Spoken Content → Voices. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
 - Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
 
 - Works with PDFs that contain real text. Scanned books (photos of pages) have no text to reflow.
 - Images in the PDF aren't shown.
 - Chapter detection is a best guess from text size and words like "Chapter" or "Prologue".
+
+## Updates
+
+The app checks for a newer version whenever it opens. From the home screen it updates itself; while you're reading it shows an **Update now** button so your page isn't interrupted. The version number is shown at the bottom of the home screen. When releasing a new version, raise the number in both `version.json` and `APP_VERSION` in `index.html`.
 
 ## Files
 
@@ -55,5 +60,6 @@ Tip: to get a PDF into Files, open it in Safari or Mail, tap Share, then **Save 
 | `index.html` | The whole app: layout, styles and script in one file |
 | `book-reader.html` | A copy for downloading and opening on its own |
 | `manifest.webmanifest` | App name, colours and icons for installing |
+| `version.json` | The latest version number, used by the update check |
 | `sw.js` | Service worker that caches the app so it works offline |
 | `*.png` | App icons |
