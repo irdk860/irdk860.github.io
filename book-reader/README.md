@@ -12,6 +12,7 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - lets you bookmark pages with a ribbon and jump back to them
 - keeps each book on your device, so **Continue reading** reopens it at your page without choosing the PDF again
 - remembers where you stopped and shows your books on a shelf (with Remove to clear one off)
+- **an account for all your devices** (optional): tap **Account** on the home screen and sign in with an email and password. Books you add, your place, bookmarks, covers and settings then appear on every phone and computer you sign in on
 - **reads the book aloud**: tap the headphones button (or press L) and it reads from the page you're on, highlights the paragraph being read and turns the pages for you, with play/pause, skip paragraph, speed (0.75× to 2×) and a choice of voice
 - **voice settings inside the app**: choose the voice, speed, pitch and volume, and tap **Test voice** to hear it, all from the player. If a book's language has no voice on the device, the app offers voices from other languages instead
 - **voice library**: tap **Get more voices** (in Voice settings, or in the globe menu) to download extra voices straight into the app, in dozens of languages including Swahili and Arabic. They're free, work offline afterwards and sound the same on every phone and computer. Voices are open-source [Piper](https://github.com/rhasspy/piper) voices, run in the browser with [vits-web](https://github.com/diffusionstudio/vits-web)
@@ -22,7 +23,21 @@ Drop in a PDF and Book Reader reflows the text into real book pages, with a two-
 - **translate a book** (Chrome or Edge on a computer): pick a language and the book is translated on your device, chapter by chapter, and read aloud in that language. Translations are saved, so they don't need redoing
 - has adjustable text size, keyboard shortcuts (← → to turn, B to bookmark, C for contents) and swipe gestures
 
-Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage, all on that device only.
+Your PDF is read inside your browser with [PDF.js](https://mozilla.github.io/pdf.js/) and the PDF file itself is never uploaded anywhere. The extracted text of each book is kept in your browser's IndexedDB, and bookmarks and reading positions in local storage. Without an account, all of that stays on that device only.
+
+## Your account (keep books on every device)
+
+1. On the home screen, tap **Account** (the person icon).
+2. Type an email and a password (at least 8 characters) and tap **Create account**. On your other devices, tap **Sign in** with the same details.
+3. That's it. Books you've already added are saved to your account straight away, and from then on:
+   - a book you add on one device shows on the shelf of the others, marked **Open from your account →**. Tapping it downloads the book. No PDF is needed.
+   - your page, bookmarks, book language and translation choice follow you. If you read on your phone, your computer opens at the same page.
+   - book pictures, the colour theme, fonts, layout, text size, reading speed and app language follow you too. Voices and the background picture stay per device, because each device has different voices.
+   - removing a book from the shelf removes it from your account and your other devices.
+
+Saving happens by itself a moment after you turn a page, and when you go back to the shelf or switch apps. Without internet, everything carries on working on the device and catches up the next time it's online. **Sync now** in the Account panel saves and fetches straight away. If two devices read the same book, the most recent reading wins.
+
+**What's stored:** the text of each book (not the PDF file), covers, reading places, bookmarks and settings. It's kept with [Supabase](https://supabase.com) (a hosted database in the UK/EU), and every row and file is locked to your account, so no one else can see or change it. Sign out any time; your books stay on that device.
 
 ## Install it
 
@@ -79,7 +94,9 @@ Voices for Swahili, Amharic, Hausa and Irish are often not available on phones. 
 
 - Listening uses the voices built into your device, so it works offline. The app hides the novelty sound-effect voices some devices include (Bells, Bubbles, Organ and so on) and picks the most natural voice for your region automatically. On iPhone, reading stops if you lock the screen or switch apps (Safari doesn't allow web apps to talk in the background); the app keeps the screen awake while it reads, and you can press play to carry on.
 
-- Books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
+- Without an account, books, places and bookmarks are kept per device and per browser. Books opened before version 2 need choosing once more, then they reopen by themselves. Clearing your browser's website data removes them. On iPhone, Safari can clear data for sites you haven't visited in a few weeks, so install it to your home screen to keep your shelf safe.
+
+- Accounts: there's no email check and no "forgot password" yet (that needs an email-sending service), so keep your password somewhere safe. The free Supabase plan allows 1 GB of book files in total, and pauses the project after a week with no use: the owner gets an email first, and can wake it again with **Resume project** in the Supabase dashboard.
 
 - Works with PDFs that contain real text. Scanned books (photos of pages) have no text to reflow.
 - Images in the PDF aren't shown.
@@ -98,4 +115,5 @@ The app checks for a newer version whenever it opens. From the home screen it up
 | `manifest.webmanifest` | App name, colours and icons for installing |
 | `version.json` | The latest version number, used by the update check |
 | `sw.js` | Service worker that caches the app so it works offline |
+| `supabase/` | The account setup: database tables and rules, and the sign-up function |
 | `*.png` | App icons |
